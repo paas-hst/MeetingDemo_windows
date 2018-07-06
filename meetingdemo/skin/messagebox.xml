@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window size="360,190" caption="0,0,0,30" sizebox="4,4,4,4">
+	<Font id="0" name="微软雅黑" size="14" bold="false" default="true" />
+	<VerticalLayout height="190" width="360" bkcolor="#FFF0F0F0" bkimage="img\\messagebox\\dialog2_bg.png">
+		<!-- 顶部标题栏 -->
+		<HorizontalLayout height="30" width="360">
+			<Label name="logo" width="18" height="18" bkimage="img\\login\\titlebar_logo.png" padding="6, 6, 6, 6" />
+			<Label name="logo_text" text="提示" textcolor="#FFFFFFFF" height="30" />
+		</HorizontalLayout>
+		
+		<HorizontalLayout height="110" width="360" >
+			<Label name="label_text" padding="40,40,0,40" />
+		</HorizontalLayout>
+		
+		<HorizontalLayout height="50" width="360" >
+			<Button name="btn_cancel" text="取消" textcolor="#FF000000" padding="130,10,0,10" width="100" height="30" bkimage="img\\messagebox\\set_btn.png" hotimage="img\\messagebox\\set_btn_hot.png" pushedimage="img\\messagebox\\set_btn_pressed.png" />
+			<Button name="btn_ok" text="确定" textcolor="#FFFFFFFF" padding="10,10,20,10" width="100" height="30" bkimage="img\\messagebox\\set_bluebtn.png" hotimage="img\\messagebox\\set_bluebtn_hot.png" pushedimage="img\\messagebox\\set_bluebtn_pressed.png" />
+		</HorizontalLayout>
+		
+	</VerticalLayout>
+</Window>

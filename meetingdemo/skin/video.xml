@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window size="500, 350">
+	<Font name="微软雅黑" size="14" bold="false" default="true" id="0" />
+	<VerticalLayout bkcolor="#FF51596C" bordersize="2,2,2,2" bordercolor="#FFBCBCBC">
+		<!-- 占位 -->
+		<HorizontalLayout />
+		
+		<!-- 底部信息展示区 -->
+		<HorizontalLayout height="50">
+			<!-- 音频信息 -->
+			<HorizontalLayout bkimage="img\\video\\video_stat_bg.png" height="30" width="140"  padding="20, 10, 20, 10" >
+				<Label name="label_mic" width="12" bkimage="img\\video\\video_stat_audio.png" padding="10, 8, 10, 8" />
+				<Label name="label_volume" height="10" width="100" bkimage="img\\video\\video_stats_volume_bg.png" padding="0, 10, 0, 10" />
+			</HorizontalLayout>
+			
+			<!-- 视频信息 -->
+			<Label name="label_video_info" text="20000K 14F 1920*1080" textcolor="#FFFFFFFF" align="center" height="30" width="180" bkimage="file='img\\video\\video_stat_bg.png' corner='20,20,20,20' hole='true'" padding="20, 10, 20, 10" />
+			
+			<Control />
+			
+			<!-- 菜单 -->
+			<Button name="btn_menu" height="30" width="30" bkimage="img\\video\\video_more.png" padding="0, 10, 20, 10" />
+		</HorizontalLayout>
+	</VerticalLayout>
+</Window>

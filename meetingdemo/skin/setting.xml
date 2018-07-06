@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window size="480,662" caption="0,0,0,30" sizebox="4,4,4,4">
+	<Font id="0" name="微软雅黑" size="14" bold="false" default="true" />
+	<Font id="1" name="微软雅黑" size="30" bold="false" />
+	<Font id="2" name="微软雅黑" size="12" bold="false" />
+	<Font id="3" name="微软雅黑" size="14" bold="true" />
+	<VerticalLayout height="662" width="480" bkcolor="#FFF0F0F0" bkimage="img\\setting\\set_bg.png">
+		<!-- 顶部标题栏 -->
+		<HorizontalLayout height="30" width="480">
+			<Label name="logo" width="18" height="18" bkimage="img\\login\\titlebar_logo.png" padding="6, 6, 6, 6" />
+			<Label name="logo_text" text="设置" textcolor="#FFFFFFFF" height="30" />
+			<Control />
+			<Button name="closebtn" tooltip="关闭" height="30" width="30" normalimage="img\\login\\titlebar_close.png" hotimage="img\\login\\titlebar_close_hot.png" pushedimage="img\\login\\titlebar_close_press.png"/>
+		</HorizontalLayout>
+		
+		<HorizontalLayout height="632" width="480" >
+			<VerticalLayout>
+				<HorizontalLayout height="14" width="480" padding="60,20,0,0">
+					<Label name="" font="3" text="麦克风" textcolor="0xFF000000"/>
+				</HorizontalLayout>
+				<HorizontalLayout height="30" width="480" padding="60,15,0,0">
+					<Combo name="combo_mic" width="360" height="30" textpadding="12,0,0,0" bkimage="file='img\\setting\\combox.png' corner='20,20,20,20'"/>
+				</HorizontalLayout>
+				<HorizontalLayout height="30" width="480" padding="60,10,0,0">
+					<Label name="" width="40" height="14" font="2" text="音量：" />
+					<Slider name="slider_mic" height="14" width="130" thumbsize="14,14" bkimage="img\\setting\\menu_slider_bg.png" thumbimage="img\\setting\\menu_sliderbtn_disable.png" />
+					<Label name="" width="40" height="14" padding="20,0,0,0" font="2" text="能量：" />
+					<Label name="mic_energy" height="4" width="130" padding="0,5,0,0" bkimage="img\\setting\\menu_wave0.png" />
+				</HorizontalLayout>
+				
+				<HorizontalLayout height="14" width="480" padding="60,20,0,0">
+					<Label name="" font="3" text="扬声器" textcolor="0xFF000000"/>
+				</HorizontalLayout>
+				<HorizontalLayout height="30" width="480" padding="60,15,0,0">
+					<Combo name="combo_aud" width="360" height="30" textpadding="12,0,0,0" bkimage="file='img\\setting\\combox.png' corner='20,20,20,20'"/>
+				</HorizontalLayout>
+				<HorizontalLayout height="30" width="480" padding="60,10,0,0">
+					<Label name="" width="40" height="14" font="2" text="音量：" />
+					<Slider name="slider_aud" height="14" width="130" thumbsize="14,14" bkimage="img\\setting\\menu_slider_bg.png" thumbimage="img\\setting\\menu_sliderbtn_disable.png" />
+					<Label name="" width="40" height="14" padding="20,0,0,0" font="2" text="能量：" />
+					<Label name="aud_energy" height="4" width="130" padding="0,5,0,0" bkimage="img\\setting\\menu_wave0.png" />
+				</HorizontalLayout>
+				
+				<HorizontalLayout height="14" width="480" padding="60,20,0,0">
+					<Label name="label_video" font="3" text="摄像头" textcolor="0xFF000000"/>
+				</HorizontalLayout>
+				
+				<HorizontalLayout height="14" width="480" padding="60,10,0,0">
+					<Label name="label_framerate" font="2" width="60" text="帧   率：" textcolor="0xFF000000"/>
+					<Slider name="slider_frame_rate" height="14" width="220" min="1" max="30" thumbsize="14,14" bkimage="img\\setting\\menu_slider_stat.png" thumbimage="img\\setting\\menu_sliderbtn.png" thumbhotimage="img\\setting\\menu_sliderbtn_hot.png" thumpushedbimage="img\\setting\\menu_sliderbtn_press.png"/>
+					<Label name="label_frame_rate" font="2" width="60" padding="20,0,0,0" text="30 帧/秒" textcolor="0xFF000000"/>
+				</HorizontalLayout>
+				
+				<HorizontalLayout height="30" width="480" padding="60,15,0,0">
+					<Label name="label_resolution" font="2" width="60" text="分辨率：" textcolor="0xFF000000"/>
+					<Combo name="combo_resolution" width="300" height="30" textpadding="12,0,0,0" bkimage="img\\setting\\combox.png"/>
+				</HorizontalLayout>
+				
+				<HorizontalLayout height="30" width="480" padding="60,10,0,0">
+					<Label name="label_preview" font="2" width="60" text="预   览：" textcolor="0xFF000000"/>
+					<Combo name="combo_cam" width="300" height="30" textpadding="12,0,0,0" bkimage="img\\setting\\combox.png"/>
+				</HorizontalLayout>
+				<HorizontalLayout height="180" width="480" padding="60,10,0,0">
+					<Label name="cam_previewer" width="360" height="180" bkcolor="0xFF000000" />
+				</HorizontalLayout>
+				
+				<HorizontalLayout />
+				
+				<HorizontalLayout height="30" width="480" padding="0, 0, 0, 8">
+					<Button name="setting_ok" text="确定" width="100" padding="360,0,20,0" textcolor="0xFFFFFFFF" bkimage="img\\setting\\set_bluebtn.png" hotimage="img\\setting\\set_bluebtn_hot.png" pushedimage="img\\setting\\set_bluebtn_pressed.png" />
+				</HorizontalLayout>
+				
+			</VerticalLayout>
+		</HorizontalLayout>
+		
+	</VerticalLayout>
+</Window>

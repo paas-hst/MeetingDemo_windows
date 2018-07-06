@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window size="400,260">
+	<Font name="微软雅黑" size="14" bold="false" default="true" id="0" />
+	<VerticalLayout bkcolor="#FF51596C" bordersize="1,1,1,1" bordercolor="#FF30343E" tooltip="双击放大">
+		<Label name="video_bk" width="38" height="38" bkimage="img\\video\\video_icon_default.png" />
+	</VerticalLayout>
+</Window>

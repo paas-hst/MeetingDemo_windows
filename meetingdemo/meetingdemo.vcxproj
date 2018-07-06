@@ -1,0 +1,177 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{2230A307-5F73-454E-A1DE-E54DE3C48168}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>meetingdemo</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)\output_$(Configuration)</OutDir>
+    <IntDir>$(SolutionDir)\intermediate\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)\output_$(Configuration)</OutDir>
+    <IntDir>$(SolutionDir)\intermediate\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>duilib\DuiLib;..\sdk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>duilib\lib;..\sdk\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>DuiLib_ud.lib;fsp_sdk.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>@echo off
+echo -----------------------------
+
+rd /s /q $(TargetDir)skin
+md $(TargetDir)skin
+
+copy /Y appinfo.xml $(TargetDir)
+xcopy /y/s/e/i skin $(TargetDir)skin
+copy /Y ..\sdk\bin\*.dll $(TargetDir)
+copy /Y duilib\bin\DuiLib_ud.dll $(TargetDir)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>duilib\DuiLib;..\sdk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>duilib\lib;..\sdk\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>DuiLib_ud.lib;fsp_sdk.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>@echo off
+echo -----------------------------
+
+rd /s /q $(TargetDir)skin
+md $(TargetDir)skin
+
+copy /Y appinfo.xml $(TargetDir)
+xcopy /y/s/e/i skin $(TargetDir)skin
+copy /Y ..\sdk\bin\*.dll $(TargetDir)
+copy /Y duilib\bin\DuiLib_u.dll $(TargetDir)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ConfigParser.h" />
+    <ClInclude Include="define.h" />
+    <ClInclude Include="DisplayVideoWnd.h" />
+    <ClInclude Include="DuiFrameWnd.h" />
+    <ClInclude Include="DuiLoginErrorWnd.h" />
+    <ClInclude Include="DuiLoginWaitWnd.h" />
+    <ClInclude Include="DuiLoginWnd.h" />
+    <ClInclude Include="DuiSettingWnd.h" />
+    <ClInclude Include="FloatWnd.h" />
+    <ClInclude Include="meetingdemo.h" />
+    <ClInclude Include="fsp_token.h" />
+    <ClInclude Include="MediaInfoWnd.h" />
+    <ClInclude Include="MessageBox.h" />
+    <ClInclude Include="observer_impl_base.hpp" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="SdkManager.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="tinyxml2.h" />
+    <ClInclude Include="ToolbarMenu.h" />
+    <ClInclude Include="UICrack.h" />
+    <ClInclude Include="UIMenu.h" />
+    <ClInclude Include="util.h" />
+    <ClInclude Include="VideoWnd.h" />
+    <ClInclude Include="VideoWndMgr.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="aes.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="ConfigParser.cpp" />
+    <ClCompile Include="DisplayVideoWnd.cpp" />
+    <ClCompile Include="DuiFrameWnd.cpp" />
+    <ClCompile Include="DuiLoginErrorWnd.cpp" />
+    <ClCompile Include="DuiLoginWaitWnd.cpp" />
+    <ClCompile Include="DuiLoginWnd.cpp" />
+    <ClCompile Include="DuiSettingWnd.cpp" />
+    <ClCompile Include="FloatWnd.cpp" />
+    <ClCompile Include="meetingdemo.cpp" />
+    <ClCompile Include="MediaInfoWnd.cpp" />
+    <ClCompile Include="MessageBox.cpp" />
+    <ClCompile Include="SdkManager.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="tinyxml2.cpp" />
+    <ClCompile Include="ToolbarMenu.cpp" />
+    <ClCompile Include="UICrack.cpp" />
+    <ClCompile Include="UIMenu.cpp" />
+    <ClCompile Include="VideoWnd.cpp" />
+    <ClCompile Include="VideoWndMgr.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="meetingdemo.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\Debug\skin\img\windows.ico" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
