@@ -70,7 +70,8 @@ bool CConfigParser::Init()
 	else
 		m_ClientConfig.strAppId = szAppId;
 
-	const char* szServerAddr = doc.FirstChildElement("ServerAddr")->GetText();
+	tinyxml2::XMLElement* serverAddrElement = doc.FirstChildElement("ServerAddr");
+	const char* szServerAddr = serverAddrElement ? serverAddrElement->GetText() : "";
 	if (!szServerAddr) // ‘ –Ì≤ª≈‰÷√ServerAddr
 		m_ClientConfig.strServerAddr = "";
 	else
