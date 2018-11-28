@@ -73,7 +73,6 @@ CDuiSettingWnd::~CDuiSettingWnd()
  ------------------------------------------------------------------------------*/
 CDuiString CDuiSettingWnd::GetSkinFolder()
 {
-
 	return CDuiString(L"skin");
 }
 

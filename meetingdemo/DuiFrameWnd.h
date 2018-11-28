@@ -37,6 +37,7 @@ private:
 	void OnClickMicBtn(TNotifyUI& msg);
 	void OnClickCamBtn(TNotifyUI& msg);
 	void OnClickSettingBtn(TNotifyUI& msg);
+	void OnClickRecordBtn(TNotifyUI& msg);
 
 	bool IsCamOpened(DWORD dwCamIndex);
 
@@ -45,6 +46,7 @@ private:
 
 	void RefreshMicBtnBkImg();
 	void RefreshCamBtnBkImg();
+	void RefreshRecordBtnBkImg();
 
 	void OnAddRemoteAudio(WPARAM wParam, LPARAM lParam);
 	void OnDelRemoteAudio(WPARAM wParam, LPARAM lParam);
@@ -58,6 +60,10 @@ private:
 	void AdjustToolbarBtn();
 
 	virtual LRESULT HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) override;
+
+	void StopRecord();
+
+	void OnTimer();
 
 private:
 	// 6个视频窗口管理器
@@ -73,5 +79,9 @@ private:
 
 	bool m_bBroadcastMic;
 	bool m_bOpenSpeaker;
+	bool m_bRecord;
+
+	std::vector<RemoteAudioInfo> m_vecRemoteAudioInfo;
+	std::vector<RemoteVideoInfo> m_vecRemoteVideoInfo;
 };
 

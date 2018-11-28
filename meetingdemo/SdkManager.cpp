@@ -11,6 +11,8 @@
 #include "util.h"
 #include "ConfigParser.h"
 #include "fsp_token.h"
+#include <fstream>
+#include <sstream>
 
 /*------------------------------------------------------------------------------
  * 描  述：构造函数
@@ -67,14 +69,12 @@ bool CSdkManager::Init()
 	if (m_pFspEngin == nullptr)
 		return false;
 
-	if (!demo::CConfigParser::GetInstance().Init())
-		return false;
-
 	demo::ClientConfig& config = demo::CConfigParser::GetInstance().GetClientConfig();
 
-	m_FspEnginContext.app_id = config.strAppId.c_str();
+	m_FspEnginContext.app_id = config.bUserDefine ? config.strUserAppId.c_str() : config.strAppId.c_str();
 	m_FspEnginContext.log_path = "./";
 	m_FspEnginContext.event_handler = this;
+	m_FspEnginContext.data_handler = this;
 	m_FspEnginContext.server_addr = config.strServerAddr.c_str();
 
 	fsp::ErrCode result = m_pFspEngin->Init(m_FspEnginContext);
@@ -390,8 +390,8 @@ std::string CSdkManager::BuildToken(char* szGroupId, char* szUserId)
 {
 	demo::ClientConfig& config = demo::CConfigParser::GetInstance().GetClientConfig();
 	
-	fsp::tools::AccessToken token(config.strAppSecret);
-	token.app_id		= config.strAppId;
+	fsp::tools::AccessToken token(config.bUserDefine ? config.strUserAppSecret : config.strAppSecret);
+	token.app_id		= config.bUserDefine ? config.strUserAppId : config.strAppId;
 	token.group_id		= szGroupId;
 	token.user_id		= szUserId;
 	token.expire_time	= 0;
@@ -473,4 +473,185 @@ void CSdkManager::SetLoginUser(LPCTSTR szUser)
 const CDuiString& CSdkManager::GetLoginUser()
 {
 	return m_strUser;
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：本地音频数据回调处理，此处直接写文件
+ * 参  数：[in] data 数据
+ *         [in] data_len 数据长度
+ * 返回值：无
+------------------------------------------------------------------------------*/
+void CSdkManager::OnLocalAudioStreamRawData(const char* data, int data_len)
+{
+	string strRecorFile = "LocalAudio.data";
+	std::ofstream ofs(strRecorFile, std::ios_base::binary | std::ios_base::app);
+	ofs.write(data, data_len);
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：远端音频数据回调处理，此处直接写文件
+ * 参  数：[in] user_id 远端用户标识
+ *         [in] data 数据
+ *         [in] data_len 数据长度
+ * 返回值：无
+------------------------------------------------------------------------------*/
+void CSdkManager::OnRemoteAudioStreamRawData(const String& user_id, const char* data, int data_len)
+{
+	string strRecorFile = "RemoteAudio_" + string(user_id.c_str()) + ".data";
+	std::ofstream ofs(strRecorFile, std::ios_base::binary | std::ios_base::app);
+	ofs.write(data, data_len);
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：本地麦克风/远端用户音频数据回调处理，此处直接写文件
+ * 参  数：[in] data 数据
+ *         [in] data_len 数据长度
+ * 返回值：无
+------------------------------------------------------------------------------*/
+void CSdkManager::OnMixAudioStreamRawData(const char* data, int data_len)
+{
+	MessageBox(NULL, L"OnAudioMixedStreamRawData", L"Callback", 0);
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：本地视频数据回调处理，此处直接写文件
+ * 参  数：[in] camera_id 本地摄像头索引
+ *         [in] header 视频头信息，具体见BitmapInfoHeader的注释
+ *         [in] data 数据
+ *         [in] data_len 数据长度
+ * 返回值：无
+------------------------------------------------------------------------------*/
+void CSdkManager::OnLocalVideoStreamRawData(int camera_id, BitmapInfoHeader* header, const char* data, int data_len)
+{
+	std::ostringstream convert;
+	convert << camera_id;
+	string strRecorFile = "LocalVideo" + convert.str() + ".data";
+	std::ofstream ofs(strRecorFile, std::ios_base::binary | std::ios_base::app);
+	ofs.write(data, data_len);
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：远端视频数据回调处理，此处直接写文件
+ * 参  数：[in] user_id 远端用户标识
+ *         [in] video_id 远端视频标识
+ *         [in] header 视频头信息，具体见BitmapInfoHeader的注释
+ *         [in] data 数据
+ *         [in] data_len 数据长度
+ * 返回值：无
+------------------------------------------------------------------------------*/
+void CSdkManager::OnRemoteVideoStreamRawData(const String& user_id, const String& video_id, BitmapInfoHeader* header, const char* data, int data_len)
+{
+	string strRecorFile = "RemoteVideo_" + string(user_id.c_str()) + "_" + string(video_id.c_str()) +".data";
+	std::ofstream ofs(strRecorFile, std::ios_base::binary | std::ios_base::app);
+	ofs.write(data, data_len);
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：启动本地视频录制
+ * 参  数：[in] nDevId 本地摄像头索引
+ * 返回值：无
+------------------------------------------------------------------------------*/
+void CSdkManager::StartRecordLocalVideo(int nDevId)
+{
+	fsp::CallbackDataDesc data_desc;
+	data_desc.data_type = CALLBACK_DATA_LOCAL_VIDEO_RAW;
+	data_desc.camera_id = nDevId;
+	m_pFspEngin->SetCallbackDataState(data_desc, true);
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：停止本地视频录制
+ * 参  数：[in] nDevId 本地摄像头索引
+ * 返回值：无
+------------------------------------------------------------------------------*/
+void CSdkManager::StopRecordLocalVideo(int nDevId)
+{
+	fsp::CallbackDataDesc data_desc;
+	data_desc.data_type = CALLBACK_DATA_LOCAL_VIDEO_RAW;
+	data_desc.camera_id = nDevId;
+	m_pFspEngin->SetCallbackDataState(data_desc, false);
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：启动本地音频录制
+ * 参  数：无
+ * 返回值：无
+------------------------------------------------------------------------------*/
+void CSdkManager::StartRecordLocalAudio()
+{
+	fsp::CallbackDataDesc data_desc;
+	data_desc.data_type = CALLBACK_DATA_LOCAL_AUDIO_RAW;
+	m_pFspEngin->SetCallbackDataState(data_desc, true);
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：停止本地音频录制
+ * 参  数：无
+ * 返回值：无
+------------------------------------------------------------------------------*/
+void CSdkManager::StopRecordLocalAudio()
+{
+	fsp::CallbackDataDesc data_desc;
+	data_desc.data_type = CALLBACK_DATA_LOCAL_AUDIO_RAW;
+	m_pFspEngin->SetCallbackDataState(data_desc, false);
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：启动远端视频录制
+ * 参  数：[in] user_id 远端用户标识
+ *         [in] video_id 远端视频标识
+ * 返回值：无
+------------------------------------------------------------------------------*/
+void CSdkManager::StartRecordRemoteVideo(const std::string& user_id, const std::string& video_id)
+{
+	fsp::CallbackDataDesc data_desc;
+	data_desc.data_type = CALLBACK_DATA_REMOTE_VIDEO_RAW;
+	data_desc.user_id = user_id.c_str();
+	data_desc.video_id = video_id.c_str();
+	
+	m_pFspEngin->SetCallbackDataState(data_desc, true);
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：停止远端视频录制
+ * 参  数：[in] user_id 远端用户标识
+ *         [in] video_id 远端视频标识
+ * 返回值：无
+------------------------------------------------------------------------------*/
+void CSdkManager::StopRecordRemoteVideo(const std::string& user_id, const std::string& video_id)
+{
+	fsp::CallbackDataDesc data_desc;
+	data_desc.data_type = CALLBACK_DATA_REMOTE_VIDEO_RAW;
+	data_desc.user_id = user_id.c_str();
+	data_desc.video_id = video_id.c_str();
+
+	m_pFspEngin->SetCallbackDataState(data_desc, false);
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：启动远端音频录制
+ * 参  数：[in] user_id 远端用户标识
+ * 返回值：无
+------------------------------------------------------------------------------*/
+void CSdkManager::StartRecordRemoteAudio(const std::string& user_id)
+{
+	fsp::CallbackDataDesc data_desc;
+	data_desc.data_type = CALLBACK_DATA_REMOTE_AUDIO_RAW;
+	data_desc.user_id = user_id.c_str();
+
+	m_pFspEngin->SetCallbackDataState(data_desc, true);
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：停止远端音频录制
+ * 参  数：[in] user_id 远端用户标识
+ * 返回值：无
+------------------------------------------------------------------------------*/
+void CSdkManager::StopRecordRemoteAudio(const std::string& user_id)
+{
+	fsp::CallbackDataDesc data_desc;
+	data_desc.data_type = CALLBACK_DATA_REMOTE_AUDIO_RAW;
+	data_desc.user_id = user_id.c_str();
+
+	m_pFspEngin->SetCallbackDataState(data_desc, false);
 }

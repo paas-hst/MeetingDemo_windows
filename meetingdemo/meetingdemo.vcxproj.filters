@@ -96,6 +96,9 @@
     <ClInclude Include="meetingdemo.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="DuiAppConfigWnd.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DisplayVideoWnd.cpp">
@@ -156,6 +159,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="meetingdemo.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DuiAppConfigWnd.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

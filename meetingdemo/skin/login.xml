@@ -3,6 +3,7 @@
 	<Font id="0" name="微软雅黑" size="14" bold="false" default="true" />
 	<Font id="1" name="微软雅黑" size="30" bold="false" />
 	<Font id="2" name="微软雅黑" size="9" bold="false" />
+	<Font id="3" name="微软雅黑" size="12" bold="false" />
 	<VerticalLayout bkcolor="#FFF0F0F0" bkimage="img\\login\\login_bg.png">
 		<!-- 顶部标题栏 -->
 		<HorizontalLayout height="30" bkimage="img\\login\\login_title_bg.png" bkcolor="#FFEEBBCC">
@@ -14,15 +15,21 @@
 		
 		<HorizontalLayout height="570" width="1000" bkimage="img\\login\\login_bg.png">
 			<VerticalLayout>
-				<HorizontalLayout height="40" width="1000" padding="0,90,0,0">
+				<HorizontalLayout height="30" width="100" padding="875,25,25,0">
+					<Button name="app_config_btn" font="3" text="应用配置" textcolor="0xFFB9CED9" align="left" textpadding="35,0,0,0" normalimage="img\\login\\btn_config.png" hotimage="img\\login\\btn_config_hot.png" pushedimage="img\\login\\btn_config_press.png"/>
+				</HorizontalLayout>
+				<HorizontalLayout height="40" width="1000" padding="0,35,0,0">
 					<Label name="login_label" font="1" text="登录" textcolor="0xFFFFFFFF" align="center" />
 				</HorizontalLayout>
 				<HorizontalLayout height="40" width="360" padding="320, 40, 0, 0" >
-					<Edit name="group_name_edit" textpadding="20" tipvalue="请输入Group ID" tipvaluecolor="#FF989898" tooltip="请输入分组ID" height="40" width="360" bkimage="img\\login\\login_input.png"/>
+					<RichEdit name="group_name_edit" inset="10,10,0,0" wanttab="false" rich="false" multiline="false" textpadding="20" tipvalue="请输入Group ID" tipvaluecolor="#FF989898" tooltip="请输入Group ID" height="40" width="360" bkimage="img\\login\\login_input.png"/>
 				</HorizontalLayout>
-				<HorizontalLayout height="40" width="360" padding="320, 20, 0, 0" >
-					<Edit name="user_name_edit" textpadding="20" tipvalue="请输入User ID" tipvaluecolor="#FF989898" tooltip="请输入用户ID" height="40" width="360" bkimage="img\\login\\login_input.png" />
+				<HorizontalLayout height="40" width="360" padding="320, 40, 0, 0" >
+					<RichEdit name="user_name_edit" inset="10,10,0,0" wanttab="false" rich="false" multiline="false" textpadding="20" tipvalue="请输入User ID" tipvaluecolor="#FF989898" tooltip="请输入User ID" height="40" width="360" bkimage="img\\login\\login_input.png"/>
 				</HorizontalLayout>
+				<!--HorizontalLayout height="40" width="360" padding="320, 20, 0, 0" >
+					<Edit name="user_name_edit" textpadding="20" tipvalue="请输入User ID" tipvaluecolor="#FF989898" tooltip="请输入用户ID" height="40" width="360" bkimage="img\\login\\login_input.png" normalimage="img\\login\\login_input.png" hotimage="img\\login\\login_input.png"/>
+				</HorizontalLayout-->
 				<HorizontalLayout height="40" width="360" padding="320, 40, 0, 0" >
 					<Button name="login_btn" height="40" width="360" text="加 入" textcolor="0xFFFFFFFF" bkimage="img\\login\\login_btn.png" hotimage="img\\login\\login_btn_hot.png" pushedimage="img\\login\\login_btn_pressed.png" />
 				</HorizontalLayout>

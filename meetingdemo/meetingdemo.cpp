@@ -5,6 +5,7 @@
 #include "meetingdemo.h"
 #include "SdkManager.h"
 #include "UIlib.h"
+#include "ConfigParser.h"
 
 
 int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
@@ -16,8 +17,13 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 
 	DuiLib::CPaintManagerUI::SetInstance(hInstance);
 
+	if (!demo::CConfigParser::GetInstance().Init())
+		return -1;
+
 	if (CSdkManager::GetInstance().Init())
 		CSdkManager::GetInstance().Start();
+
+	demo::CConfigParser::GetInstance().Serialize();
 
 	CoUninitialize();
 

@@ -35,6 +35,7 @@ CDuiFrameWnd::CDuiFrameWnd()
 	: m_bVideoWndInitFlag(false)
 	, m_bBroadcastMic(false)
 	, m_bOpenSpeaker(false)
+	, m_bRecord(false)
 {
 }
 
@@ -45,6 +46,8 @@ CDuiFrameWnd::CDuiFrameWnd()
  ------------------------------------------------------------------------------*/
 CDuiFrameWnd::~CDuiFrameWnd()
 {
+	if (m_bRecord)
+		StopRecord();
 }
 
 /*------------------------------------------------------------------------------
@@ -123,6 +126,28 @@ void CDuiFrameWnd::RefreshMicBtnBkImg()
 		pBtnMic->SetAttribute(L"normalimage", L"img\\video\\toolbar_mic.png");
 		pBtnMic->SetAttribute(L"hotimage", L"img\\video\\toolbar_mic_hot.png");
 		pBtnMic->SetAttribute(L"pushedimage", L"img\\video\\toolbar_mic_pressed.png");
+	}
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：刷新主窗口工具栏录制背景图片
+ * 参  数：无
+ * 返回值：无
+------------------------------------------------------------------------------*/
+void CDuiFrameWnd::RefreshRecordBtnBkImg()
+{
+	CControlUI* pBtnRecord = m_PaintManager.FindControl(L"btn_record");
+	if (m_bRecord)
+	{
+		pBtnRecord->SetAttribute(L"normalimage", L"img\\video\\toolbar_recorder_open.png");
+		pBtnRecord->SetAttribute(L"hotimage", L"img\\video\\toolbar_recorder_open_hot.png");
+		pBtnRecord->SetAttribute(L"pushedimage", L"img\\video\\toolbar_recorder_open_pressed.png");
+	}
+	else
+	{
+		pBtnRecord->SetAttribute(L"normalimage", L"img\\video\\toolbar_recorder.png");
+		pBtnRecord->SetAttribute(L"hotimage", L"img\\video\\toolbar_recorder_hot.png");
+		pBtnRecord->SetAttribute(L"pushedimage", L"img\\video\\toolbar_recorder_pressed.png");
 	}
 }
 
@@ -308,6 +333,83 @@ void CDuiFrameWnd::OnClickSettingBtn(TNotifyUI& msg)
 }
 
 /*------------------------------------------------------------------------------
+ * 描  述：停止录制
+ * 参  数：无
+ * 返回值：无
+ ------------------------------------------------------------------------------*/
+void CDuiFrameWnd::StopRecord()
+{
+	// 停止录制本端视频
+	fsp::IFspEngine* pEngin = CSdkManager::GetInstance().GetFspEngin();
+	auto vecCam = pEngin->GetDeviceManager()->GetCameraDevices();
+	for (auto iter = vecCam.begin(); iter != vecCam.end(); ++iter)
+	{
+		CSdkManager::GetInstance().StopRecordLocalVideo(iter->camera_id);
+	}
+
+	// 停止录制远端视频
+	for each (RemoteVideoInfo info in m_vecRemoteVideoInfo)
+	{
+		CSdkManager::GetInstance().StopRecordRemoteVideo(
+			info.strUserId.c_str(), info.strVideoId.c_str());
+	}
+
+	// 停止录制本端音频
+	CSdkManager::GetInstance().StopRecordLocalAudio();
+
+	// 停止录制远端音频
+	for each (RemoteAudioInfo info in m_vecRemoteAudioInfo)
+	{
+		CSdkManager::GetInstance().StopRecordRemoteAudio(info.strUserId.c_str());
+	}
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：点击主界面工具栏录制按钮处理
+ * 参  数：[in] msg 通知消息
+ * 返回值：无
+ ------------------------------------------------------------------------------*/
+void CDuiFrameWnd::OnClickRecordBtn(TNotifyUI& msg)
+{
+	if (m_bRecord)
+	{
+		StopRecord();
+
+		m_bRecord = false;
+	}
+	else
+	{
+		// 录制本地视频
+		fsp::IFspEngine* pEngin = CSdkManager::GetInstance().GetFspEngin();
+		auto vecCam = pEngin->GetDeviceManager()->GetCameraDevices();
+		for (auto iter = vecCam.begin(); iter != vecCam.end(); ++iter)
+		{
+			CSdkManager::GetInstance().StartRecordLocalVideo(iter->camera_id);
+		}
+
+		// 录制远端视频
+		for each (RemoteVideoInfo info in m_vecRemoteVideoInfo)
+		{
+			CSdkManager::GetInstance().StartRecordRemoteVideo(
+				info.strUserId.c_str(), info.strVideoId.c_str());
+		}
+
+		// 录制本地音频
+		CSdkManager::GetInstance().StartRecordLocalAudio();
+
+		// 录制远端音频
+		for each (RemoteAudioInfo info in m_vecRemoteAudioInfo)
+		{
+			CSdkManager::GetInstance().StartRecordRemoteAudio(info.strUserId.c_str());
+		}
+
+		m_bRecord = true;
+	}
+
+	RefreshRecordBtnBkImg();
+}
+
+/*------------------------------------------------------------------------------
  * 描  述：消息映射处理函数
  * 参  数：[in] msg 通知消息
  * 返回值：无
@@ -325,6 +427,10 @@ void CDuiFrameWnd::OnClick(TNotifyUI& msg)
 	else if (msg.pSender->GetName() == L"btn_setting")
 	{
 		OnClickSettingBtn(msg);
+	}
+	else if (msg.pSender->GetName() == L"btn_record")
+	{
+		OnClickRecordBtn(msg);
 	}
 	else
 	{
@@ -369,6 +475,13 @@ void CDuiFrameWnd::OnAddRemoteAudio(WPARAM wParam, LPARAM lParam)
 
 	m_VideoWndMgr.AddRemoteAudio(pInfo->strUserId);
 
+	m_vecRemoteAudioInfo.push_back(*pInfo);
+
+	if (m_bRecord) // 添加录制
+	{
+		CSdkManager::GetInstance().StartRecordRemoteAudio(pInfo->strUserId.c_str());
+	}
+
 	delete pInfo;
 }
 
@@ -383,6 +496,20 @@ void CDuiFrameWnd::OnDelRemoteAudio(WPARAM wParam, LPARAM lParam)
 	RemoteAudioInfo* pInfo = (RemoteAudioInfo*)wParam;
 
 	m_VideoWndMgr.DelRemoteAudio(pInfo->strUserId);
+
+	for (auto iter = m_vecRemoteAudioInfo.begin(); iter != m_vecRemoteAudioInfo.end(); ++iter)
+	{
+		if (iter->strUserId == pInfo->strUserId)
+		{
+			m_vecRemoteAudioInfo.erase(iter);
+			break;
+		}
+	}
+
+	if (m_bRecord) // 停止录制
+	{
+		CSdkManager::GetInstance().StopRecordRemoteAudio(pInfo->strUserId.c_str());
+	}
 
 	delete pInfo;
 }
@@ -399,6 +526,14 @@ void CDuiFrameWnd::OnAddRemoteVideo(WPARAM wParam, LPARAM lParam)
 
 	m_VideoWndMgr.AddRemoteVideo(pInfo->strUserId, pInfo->strVideoId);
 
+	m_vecRemoteVideoInfo.push_back(*pInfo);
+
+	if (m_bRecord) // 添加录制
+	{
+		CSdkManager::GetInstance().StartRecordRemoteVideo(
+			pInfo->strUserId.c_str(), pInfo->strVideoId.c_str());
+	}
+
 	delete pInfo;
 }
 
@@ -413,6 +548,21 @@ void CDuiFrameWnd::OnDelRemoteVideo(WPARAM wParam, LPARAM lParam)
 	RemoteVideoInfo* pInfo = (RemoteVideoInfo*)wParam;
 
 	m_VideoWndMgr.DelRemoteVideo(pInfo->strUserId, pInfo->strVideoId);
+
+	for (auto iter = m_vecRemoteVideoInfo.begin(); iter != m_vecRemoteVideoInfo.end(); ++iter)
+	{
+		if (iter->strUserId == pInfo->strUserId && iter->strVideoId == pInfo->strVideoId)
+		{
+			m_vecRemoteVideoInfo.erase(iter);
+			break;
+		}
+	}
+
+	if (m_bRecord) // 停止录制
+	{
+		CSdkManager::GetInstance().StopRecordRemoteVideo(
+			pInfo->strUserId.c_str(), pInfo->strVideoId.c_str());
+	}
 
 	delete pInfo;
 }
@@ -485,12 +635,42 @@ void CDuiFrameWnd::AdjustToolbarBtn()
 	ZeroMemory(&rectPadding, sizeof(rectPadding));
 
 	// 魔鬼数字参考duilib的布局文件“main.xml”
-	rectPadding.left	= (rcClient.right - rcClient.left - 260) / 2;
+	rectPadding.left	= (rcClient.right - rcClient.left - 360) / 2;
 	rectPadding.top		= 15;
 	rectPadding.right	= 20;
 	rectPadding.bottom	= 15;
 
 	(m_PaintManager.FindControl(L"btn_mic"))->SetPadding(rectPadding);
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：定时器回调处理，包含刷新标题栏的上传下载速率
+ * 参  数：无
+ * 返回值：无
+ ------------------------------------------------------------------------------*/
+void CDuiFrameWnd::OnTimer()
+{
+	static int count = 0; // 用来计时1秒
+
+	if (++count >= 5) // Timer间隔是200ms，这里设置每秒刷新上传下载速率
+	{
+		StreamStats stats = CSdkManager::GetInstance().GetFspEngin()->GetStreamStats(true);
+
+		WCHAR szCaption[128];
+		ZeroMemory(szCaption, sizeof(szCaption));
+
+		_snwprintf(szCaption, 64, L"Group ID：%s    User ID：%s    Up：%d kbps    Down：%d kbps",
+			CSdkManager::GetInstance().GetLoginGroup().GetData(),
+			CSdkManager::GetInstance().GetLoginUser().GetData(),
+			stats.send_data_size * 8 / 1024, stats.recv_data_size * 8 / 1024);
+
+		CLabelUI* pCapLabel = (CLabelUI*)m_PaintManager.FindControl(L"group_user");
+		pCapLabel->SetText(szCaption);
+
+		count = 0;
+	}
+	
+	m_VideoWndMgr.OnTimer(); // 界面线程刷新音视频状态信息
 }
 
 /*------------------------------------------------------------------------------
@@ -509,7 +689,7 @@ LRESULT CDuiFrameWnd::HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lPara
 	switch (uMsg)
 	{
 	case WM_TIMER:
-		m_VideoWndMgr.OnTimer();
+		OnTimer();
 		break;
 
 	case WM_SIZE:

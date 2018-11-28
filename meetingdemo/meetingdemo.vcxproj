@@ -112,6 +112,7 @@ copy /Y duilib\bin\DuiLib_u.dll $(TargetDir)</Command>
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DuiAppConfigWnd.h" />
     <ClInclude Include="ConfigParser.h" />
     <ClInclude Include="define.h" />
     <ClInclude Include="DisplayVideoWnd.h" />
@@ -142,6 +143,7 @@ copy /Y duilib\bin\DuiLib_u.dll $(TargetDir)</Command>
     <ClCompile Include="aes.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="DuiAppConfigWnd.cpp" />
     <ClCompile Include="ConfigParser.cpp" />
     <ClCompile Include="DisplayVideoWnd.cpp" />
     <ClCompile Include="DuiFrameWnd.cpp" />

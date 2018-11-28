@@ -15,7 +15,7 @@
 
 using namespace fsp;
 
-class CSdkManager : public IFspEngineEventHandler
+class CSdkManager : public IFspEngineEventHandler, public IFspEngineDataHandler
 {
 public:
 	static CSdkManager& GetInstance();
@@ -55,6 +55,18 @@ public:
 
 	CDuiFrameWnd* GetFrameWnd() { return m_pDuiFrameWnd; }
 
+	void StartRecordLocalVideo(int nDevId);
+	void StopRecordLocalVideo(int nDevId);
+
+	void StartRecordLocalAudio();
+	void StopRecordLocalAudio();
+
+	void StartRecordRemoteVideo(const std::string& user_id, const std::string& video_id);
+	void StopRecordRemoteVideo(const std::string& user_id, const std::string& video_id);
+
+	void StartRecordRemoteAudio(const std::string& user_id);
+	void StopRecordRemoteAudio(const std::string& user_id);
+
 private:
 	CSdkManager();
 	~CSdkManager();
@@ -66,6 +78,16 @@ private:
 		RemoteVideoEventType remote_video_event) override;
 	virtual void OnRemoteAudioEvent(const String& user_id, 
 		RemoteAudioEventType remote_audio_event) override;
+
+	virtual void OnScreenShareEvent(const String &remote_user_id, ScreenShareEventType screen_share_event) {}
+	virtual void OnScreenShareRemoteControlRequest(const String& src_user_id, const String& src_user_name, int event_type) {}
+	virtual void OnScreenShareRemoteControlRespone(const String& src_user_id, const String& src_user_name, int event_type) {}
+
+	virtual void OnLocalAudioStreamRawData(const char* data, int data_len) override;
+	virtual void OnRemoteAudioStreamRawData(const String& user_id, const char* data, int data_len) override;
+	virtual void OnMixAudioStreamRawData(const char* data, int data_len) override;
+	virtual void OnLocalVideoStreamRawData(int camera_id, BitmapInfoHeader* header, const char* data, int data_len) override;
+	virtual void OnRemoteVideoStreamRawData(const String& user_id, const String& video_id, BitmapInfoHeader* header, const char* data, int data_len) override;
 
 	std::string BuildToken(char* szGroupId, char* szUserId);
 

@@ -9,6 +9,7 @@
 #include "DuiLoginWnd.h"
 #include "DuiLoginWaitWnd.h"
 #include "SdkManager.h"
+#include "DuiAppConfigWnd.h"
 #include "util.h"
 
 // ÏûÏ¢Ó³Éä
@@ -93,6 +94,13 @@ void CDuiLoginWnd::OnClick(TNotifyUI& msg)
 		{
 			CSdkManager::GetInstance().JoinGroup(szGroup, szUser);
 		}
+	}
+	else if (msg.pSender->GetName() == L"app_config_btn")
+	{
+		CDuiAppConfigWnd wndAppConfig;
+		wndAppConfig.Create(m_hWnd, _T("CDuiAppConfigWnd"), UI_WNDSTYLE_DIALOG, WS_EX_WINDOWEDGE);
+		wndAppConfig.CenterWindow();
+		wndAppConfig.ShowModal();
 	}
 	else
 	{

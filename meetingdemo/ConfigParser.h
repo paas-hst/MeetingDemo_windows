@@ -18,6 +18,9 @@ struct ClientConfig
 	std::string strAppId;
 	std::string strAppSecret;
 	std::string strServerAddr;
+	bool bUserDefine;
+	std::string strUserAppId;
+	std::string strUserAppSecret;
 };
 
 class CConfigParser
@@ -26,6 +29,7 @@ public:
 	static CConfigParser& GetInstance();
 
 	bool Init();
+	void Serialize();
 
 	ClientConfig& GetClientConfig() { return m_ClientConfig; }
 
@@ -37,6 +41,7 @@ private:
 
 private:
 	ClientConfig m_ClientConfig;
+	std::string m_config_file;
 };
 
 }

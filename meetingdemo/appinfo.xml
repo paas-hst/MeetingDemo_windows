@@ -1,3 +1,15 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<AppId>your appid</AppId>
-<AppSecret>your app key</AppSecret>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--Default app ID-->
+<AppId>925aa51ebf829d49fc98b2fca5d963bc</AppId>
+
+<!--Default app secret-->
+<AppSecret>d52be60bb810d17e</AppSecret>
+
+<!--Whether use user-defined app info-->
+<UserDefine>false</UserDefine>
+
+<!--User-defined app ID-->
+<UserAppId>ae37226f56c497064f6ca219ca950b6e</UserAppId>
+
+<!--User-defined app secret-->
+<UserAppSecret>06128b34dd073929</UserAppSecret>
