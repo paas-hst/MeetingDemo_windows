@@ -704,6 +704,9 @@ void CDisplayVideoWnd::AddRemoteAudio(const fsp::String& strUserId)
 	m_bHasAudio = true;
 	m_strUserId = strUserId;
 
+	fsp::IFspEngine* pEngin = CSdkManager::GetInstance().GetFspEngin();
+	pEngin->MuteRemoteAudio(strUserId, false);
+
 	OpenMic();
 	RefreshUserName();
 }
@@ -717,6 +720,9 @@ void CDisplayVideoWnd::DelRemoteAudio(const fsp::String& strUserId)
 {
 	if (m_bHasAudio && strcmp(m_strUserId.c_str(), strUserId.c_str()) == 0)
 		m_bHasAudio = false;
+
+	fsp::IFspEngine* pEngin = CSdkManager::GetInstance().GetFspEngin();
+	pEngin->MuteRemoteAudio(strUserId, true);
 
 	CloseMic();
 	RefreshUserName();
