@@ -381,7 +381,7 @@ void CSdkManager::OnRemoteAudioEvent(const String& user_id, RemoteAudioEventType
 }
 
 /*------------------------------------------------------------------------------
- * 描  述：生成Token
+ * 描  述：生成Token，考虑到安全性，建议将Token生成代码集成到服务器
  * 参  数：[in] szGroupId	分组ID
  *         [in] szUserId	用户ID
  * 返回值：Token

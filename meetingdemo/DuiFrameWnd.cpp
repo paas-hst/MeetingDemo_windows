@@ -635,7 +635,7 @@ void CDuiFrameWnd::AdjustToolbarBtn()
 	ZeroMemory(&rectPadding, sizeof(rectPadding));
 
 	// 魔鬼数字参考duilib的布局文件“main.xml”
-	rectPadding.left	= (rcClient.right - rcClient.left - 360) / 2;
+	rectPadding.left	= (rcClient.right - rcClient.left - 260) / 2;
 	rectPadding.top		= 15;
 	rectPadding.right	= 20;
 	rectPadding.bottom	= 15;
