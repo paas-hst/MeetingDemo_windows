@@ -79,9 +79,8 @@ private:
 	virtual void OnRemoteAudioEvent(const String& user_id, 
 		RemoteAudioEventType remote_audio_event) override;
 
-	virtual void OnScreenShareEvent(const String &remote_user_id, ScreenShareEventType screen_share_event) {}
-	virtual void OnScreenShareRemoteControlRequest(const String& src_user_id, const String& src_user_name, int event_type) {}
-	virtual void OnScreenShareRemoteControlRespone(const String& src_user_id, const String& src_user_name, int event_type) {}
+	virtual void OnScreenShareEvent(const String &user_id, ScreenShareEventType screen_share_event) {}
+	virtual void OnScreenShareRemoteControlEvent(const String& user_id, const String& src_user_name, ScreenShareRemoteControlEventType event_type) {}
 
 	virtual void OnLocalAudioStreamRawData(const char* data, int data_len) override;
 	virtual void OnRemoteAudioStreamRawData(const String& user_id, const char* data, int data_len) override;

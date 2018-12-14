@@ -41,6 +41,8 @@ enum ErrCode {
 
   ERR_NO_SCREEN_SHARE = 73,    ///<当前没有屏幕共享
 
+  ERR_RECVING_SCREEN_SHARE = 74,   ///<当前正在接收屏幕共享
+
   ERR_SERVER_ERROR = 301,	    ///服务内部错误
   ERR_FAIL = 302              ///<操作失败
 };
@@ -140,12 +142,22 @@ class IFspEngineDataHandler;
 struct FspEngineContext {
   IFspEngineEventHandler *event_handler; ///<外部实现的事件回调对象
   IFspEngineDataHandler *data_handler;	///<外部实现的数据回调对象
-  String app_id;   ///< appid 由fsp平台分配的应用id
-  String log_path; ///<日志目录，如果不填，默认程序所在目录
-  String server_addr; ///<服务地址，ip或域名加端口， 格式： "127.0.0.1:50002"，
-                      ///<如果不填，默认使用好视通的 paas
+  String app_id;						///< appid 由fsp平台分配的应用id
+  String log_path;						///<日志目录，如果不填，默认程序所在目录
+  String server_addr;					///<服务地址，ip或域名加端口， 格式： "127.0.0.1:50002"，
+										///<如果不填，默认使用好视通的 paas
+  bool auto_recv_audio;					///<是否自动接收远端音频
+  bool auto_play_audio;					///<是否自动播放远端音频
 
-  FspEngineContext() : event_handler(NULL), app_id(""), server_addr("") {}
+  FspEngineContext() 
+	  : event_handler(NULL)
+	  , data_handler(NULL)
+	  , app_id("")
+	  , log_path("./")
+	  , server_addr("")
+	  , auto_recv_audio(true)
+	  , auto_play_audio(true)
+  {}
 };
 
 /**
@@ -267,12 +279,25 @@ struct ScreenShareHostConfig{
 struct ScreenShareViewConfig {
 	HWND		wnd_parent;			 ///<父窗体的句柄
 	bool		enable_telecontrol;	 ///<是否允许远程控制
+	RECT		rect_share;			///<接收屏幕共享数据时渲染的区域
 
 	ScreenShareViewConfig()
 	{
 		wnd_parent = NULL;
+		rect_share.left = 0;
+		rect_share.top = 0;
+		rect_share.right = 0;
+		rect_share.bottom = 0;
 		enable_telecontrol = false;
 	}
+};
+
+enum ScreenShareRemoteControlEventType
+{
+	EVENT_APPLY_REMOTE_CONTROL = 0,   ///<请求远程控制
+	EVENT_CANCEL_REMOTE_CONTROL = 1,  ///<取消远程控制
+	EVENT_ACCEPT_REMOTE_CONTROL = 2,  ///<同意远程控制
+	EVENT_REFUSE_REMOTE_CONTROL = 3   ///<拒绝远程控制
 };
 
 /**
@@ -390,12 +415,18 @@ public:
 
   /**
   * @brief 屏幕共享的事件
-  * @param remote_user_id 远端屏幕共享所属的user id
+  * @param user_id 远端屏幕共享所属的user id
+  * @param screen_share_event 参见ScreenShareEventType枚举注释
   */
-  virtual void OnScreenShareEvent(const String &remote_user_id, ScreenShareEventType screen_share_event) = 0;
+  virtual void OnScreenShareEvent(const String &user_id, ScreenShareEventType screen_share_event) = 0;
 
-  virtual void OnScreenShareRemoteControlRequest(const String& src_user_id, const String& src_user_name, int event_type) = 0;
-  virtual void OnScreenShareRemoteControlRespone(const String& src_user_id, const String& src_user_name, int event_type) = 0;
+  /**
+  * @brief 屏幕共享远程控制的通知事件
+  * @param user_id 远程控制操作的用户id
+  * @param event_type 参见ScreenShareRemoteControlEventType枚举注释
+  */
+  virtual void OnScreenShareRemoteControlEvent(const String& user_id, 
+	  const String& src_user_name, ScreenShareRemoteControlEventType event_type) = 0;
 
 };
 
@@ -523,6 +554,16 @@ public:
    */
   virtual ErrCode StopPublishAudio() = 0;
 
+  /*
+   * @brief 开始播放音频，如果在FspEngineContext中设置了自动播放音频，则不需要手动调用此接口
+   */
+  virtual ErrCode StartPlayAudio() = 0;
+
+  /*
+   * @brief 停止播放音频
+   */
+  virtual ErrCode StopPlayAudio() = 0;
+
   /**
    * @brief 获取远端用户的音频能量
    * @param user_id 对应的远端用户id
@@ -639,37 +680,44 @@ public:
 
   /**
   * @brief 设置共享的参数，接收方调用
+  * @param user_id 需要设置参数的用户id
   * @param screen_share_config 共享的参数，参数信息参考数据结构ScreenShareViewConfig
   * @return 结果错误码
   */
-  virtual ErrCode SetScreenShareViewConfig(const ScreenShareViewConfig& screen_share_config) = 0;
+  virtual ErrCode SetScreenShareViewConfig(const String& user_id, const ScreenShareViewConfig& screen_share_config) = 0;
 
   /**
   * @brief 获取共享的参数，接收方调用
+  * @param user_id 需要获取参数的用户id
   * @param screen_share_config 共享的参数，参数信息参考数据结构ScreenShareViewConfig
   * @return 结果错误码
   */
-  virtual ErrCode GetScreenShareViewConfig(ScreenShareViewConfig& screen_share_config) = 0;
+  virtual ErrCode GetScreenShareViewConfig(const String& user_id, ScreenShareViewConfig& screen_share_config) = 0;
 
   /**
   * @brief  停止接收共享
+  * @user_id被停止接收的用户的id
   * @return 结果错误码
   */
-  virtual ErrCode StopReceiveScreenShare() = 0;
+  virtual ErrCode StopReceiveScreenShare(const String &user_id) = 0;
 
   /**
-  * @brief  申请远程控制
+  * @brief  远程控制操作
+  * @param  user_id 申请发起方的user id
+  * @param  operation_type 事件类型，0 申请远程控制，1 取消远程控制， 2 同意，3 拒绝
   * @return 结果错误码
   */
-  virtual ErrCode RemoteControlOperation(int operation_type) = 0;
+  virtual ErrCode RemoteControlOperation(const String &user_id, ScreenShareRemoteControlEventType operation_type) = 0;
 
   /**
-  * @brief  申请远程控制的响应
-  * @param dst_user_id 申请发起方的user id
-  * @param rsp_code 响应的信息，2 是同意，3是拒绝
+  * @brief  改变所接收的屏幕共享显示区域（显示区域大小变化时调用）
+  * @param  user_id 需要改变显示区域的用户id（即所接收的某个桌面共享者的用户id）
+  * @param  display_rect 新的显示区域
+  * @param  rsp_code 响应的信息，2 是同意，3是拒绝
   * @return 结果错误码
   */
-  virtual ErrCode RemoteControlOperationRsp(const String& dst_user_id, int rsp_code) = 0;
+  virtual ErrCode ChangeScreenShareDisplayRect(const String& user_id, const RECT& display_rect) = 0;
+
 };
 
 } // namespace fsp
