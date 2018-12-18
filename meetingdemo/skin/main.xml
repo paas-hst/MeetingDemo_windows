@@ -5,7 +5,7 @@
 		<HorizontalLayout height="30" bkimage="img\\login\\login_title_bg.png" bkcolor="#FFEEBBCC">
 			<Label name="main_logo" width="18" height="18" bkimage="img\\login\\titlebar_logo.png" padding="6, 6, 6, 6" />
 			<Label name="main_caption" text="好视通云通信" textcolor="#FFFFFFFF" width="100" height="30" />
-			<Label name="group_user" textcolor="#FFFFFFFF" width="400" height="30" align="center" padding="270,0,0,0" />
+			<Label name="group_user" textcolor="#FFFFFFFF" width="800" height="30" align="center" padding="70,0,0,0" />
 			<Control />
 			<Button name="minbtn" tooltip="最小化" height="30" width="30" normalimage="img\\login\\titlebar_mini.png" hotimage="img\\login\\titlebar_mini_hot.png" pushedimage="img\\login\\titlebar_mini_press.png"/>
 			<Button name="maxbtn" tooltip="最大化" height="30" width="30" normalimage="img\\login\\titlebar_max.png" hotimage="img\\login\\titlebar_max_hot.png" pushedimage="img\\login\\titlebar_max_press.png"/>
@@ -17,6 +17,7 @@
 		<HorizontalLayout name="toolbar_layout" height="90" bkimage="img\\video\\toolbar_bg.png">
 			<Button name="btn_mic" tooltip="广播麦克风" height="60" width="60" normalimage="img\\video\\toolbar_mic.png" hotimage="img\\video\\toolbar_mic_hot.png" pushedimage="img\\video\\toolbar_mic_pressed.png" padding="420, 15, 20, 15" />
 			<Button name="btn_cam" tooltip="广播摄像头" height="60" width="60" normalimage="img\\video\\toolbar_cam.png" hotimage="img\\video\\toolbar_cam_hot.png" pushedimage="img\\video\\toolbar_cam_pressed.png" padding="20, 15, 20, 15" />
+			<Button name="btn_aud" tooltip="播放音频" height="60" width="60" normalimage="img\\video\\toolbar_audio.png" hotimage="img\\video\\toolbar_audio_hot.png" pushedimage="img\\video\\toolbar_audio_pressed.png" padding="20, 15, 20, 15" />
 			<Button name="btn_record" tooltip="录制" height="60" width="60" normalimage="img\\video\\toolbar_recorder.png" hotimage="img\\video\\toolbar_recorder_hot.png" pushedimage="img\\video\\toolbar_recorder_pressed.png" padding="20, 15, 20, 15" />
 			<Button name="btn_setting" tooltip="音视频设置" height="60" width="60" normalimage="img\\video\\toolbar_settings.png" hotimage="img\\video\\toolbar_settings_hot.png" pushedimage="img\\video\\toolbar_settings_pressed.png" padding="20, 15, 20, 15" />
 		</HorizontalLayout>

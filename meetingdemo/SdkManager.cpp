@@ -76,6 +76,9 @@ bool CSdkManager::Init()
 	m_FspEnginContext.event_handler = this;
 	m_FspEnginContext.data_handler = this;
 	m_FspEnginContext.server_addr = config.strServerAddr.c_str();
+	m_FspEnginContext.auto_play_audio = false;
+	m_FspEnginContext.auto_recv_audio = false;
+	
 	fsp::ErrCode result = m_pFspEngin->Init(m_FspEnginContext);
 	if (result != ERR_OK)
 		return false;

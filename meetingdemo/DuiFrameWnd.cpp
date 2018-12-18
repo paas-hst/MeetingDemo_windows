@@ -35,6 +35,7 @@ CDuiFrameWnd::CDuiFrameWnd()
 	: m_bVideoWndInitFlag(false)
 	, m_bBroadcastMic(false)
 	, m_bOpenSpeaker(false)
+	, m_bPlayAudio(false)
 	, m_bRecord(false)
 {
 }
@@ -174,6 +175,28 @@ void CDuiFrameWnd::RefreshCamBtnBkImg()
 }
 
 /*------------------------------------------------------------------------------
+ * 描  述：刷新主窗口工具栏播放音频背景图片
+ * 参  数：无
+ * 返回值：无
+ ------------------------------------------------------------------------------*/
+void CDuiFrameWnd::RefreshAudBtnBkImg()
+{
+	CControlUI* pBtnAud = m_PaintManager.FindControl(L"btn_aud");
+	if (m_bPlayAudio)
+	{
+		pBtnAud->SetAttribute(L"normalimage", L"img\\video\\toolbar_audio_open.png");
+		pBtnAud->SetAttribute(L"hotimage", L"img\\video\\toolbar_audio_open_hot.png");
+		pBtnAud->SetAttribute(L"pushedimage", L"img\\video\\toolbar_audio_open_pressed.png");
+	}
+	else
+	{
+		pBtnAud->SetAttribute(L"normalimage", L"img\\video\\toolbar_audio.png");
+		pBtnAud->SetAttribute(L"hotimage", L"img\\video\\toolbar_audio_hot.png");
+		pBtnAud->SetAttribute(L"pushedimage", L"img\\video\\toolbar_audio_pressed.png");
+	}
+}
+
+/*------------------------------------------------------------------------------
  * 描  述：摄像头选择变化处理（通过菜单）
  * 参  数：[in] msg 通知消息
  * 返回值：无
@@ -257,6 +280,27 @@ void CDuiFrameWnd::OnClickMicBtn(TNotifyUI& msg)
 	}
 
 	RefreshMicBtnBkImg();
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：点击主窗口工具栏播放音频按钮处理方法
+ * 参  数：[in] msg 通知消息
+ * 返回值：无
+ ------------------------------------------------------------------------------*/
+void CDuiFrameWnd::OnClickAudBtn(TNotifyUI& msg)
+{
+	if (m_bPlayAudio)
+	{
+		CSdkManager::GetInstance().GetFspEngin()->StopPlayAudio();
+		m_bPlayAudio = false;
+	}
+	else
+	{
+		CSdkManager::GetInstance().GetFspEngin()->StartPlayAudio();
+		m_bPlayAudio = true;
+	}
+
+	RefreshAudBtnBkImg();
 }
 
 /*------------------------------------------------------------------------------
@@ -423,6 +467,10 @@ void CDuiFrameWnd::OnClick(TNotifyUI& msg)
 	else if (msg.pSender->GetName() == L"btn_cam")
 	{
 		OnClickCamBtn(msg);
+	}
+	else if (msg.pSender->GetName() == L"btn_aud")
+	{
+		OnClickAudBtn(msg);
 	}
 	else if (msg.pSender->GetName() == L"btn_setting")
 	{
@@ -617,7 +665,7 @@ void CDuiFrameWnd::AdjustTitleGroupUser()
 	ZeroMemory(&rectPadding, sizeof(rectPadding));
 
 	// 魔鬼数字参考duilib的布局文件“main.xml”
-	rectPadding.left = (rcClient.right - rcClient.left) / 2 - 200 - 130;
+	rectPadding.left = (rcClient.right - rcClient.left) / 2 - 400 - 130;
 
 	(m_PaintManager.FindControl(L"group_user"))->SetPadding(rectPadding);
 }
@@ -635,7 +683,7 @@ void CDuiFrameWnd::AdjustToolbarBtn()
 	ZeroMemory(&rectPadding, sizeof(rectPadding));
 
 	// 魔鬼数字参考duilib的布局文件“main.xml”
-	rectPadding.left	= (rcClient.right - rcClient.left - 360) / 2;
+	rectPadding.left	= (rcClient.right - rcClient.left - 460) / 2;
 	rectPadding.top		= 15;
 	rectPadding.right	= 20;
 	rectPadding.bottom	= 15;
@@ -656,10 +704,10 @@ void CDuiFrameWnd::OnTimer()
 	{
 		StreamStats stats = CSdkManager::GetInstance().GetFspEngin()->GetStreamStats(true);
 
-		WCHAR szCaption[128];
+		WCHAR szCaption[256];
 		ZeroMemory(szCaption, sizeof(szCaption));
 
-		_snwprintf(szCaption, 64, L"Group ID：%s    User ID：%s    Up：%d kbps    Down：%d kbps",
+		_snwprintf(szCaption, 256, L"Group ID：%s    User ID：%s    Up：%d kbps    Down：%d kbps",
 			CSdkManager::GetInstance().GetLoginGroup().GetData(),
 			CSdkManager::GetInstance().GetLoginUser().GetData(),
 			stats.send_data_size * 8 / 1024, stats.recv_data_size * 8 / 1024);

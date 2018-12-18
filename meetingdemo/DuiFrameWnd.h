@@ -36,6 +36,7 @@ private:
 
 	void OnClickMicBtn(TNotifyUI& msg);
 	void OnClickCamBtn(TNotifyUI& msg);
+	void OnClickAudBtn(TNotifyUI& msg);
 	void OnClickSettingBtn(TNotifyUI& msg);
 	void OnClickRecordBtn(TNotifyUI& msg);
 
@@ -46,6 +47,7 @@ private:
 
 	void RefreshMicBtnBkImg();
 	void RefreshCamBtnBkImg();
+	void RefreshAudBtnBkImg();
 	void RefreshRecordBtnBkImg();
 
 	void OnAddRemoteAudio(WPARAM wParam, LPARAM lParam);
@@ -79,6 +81,7 @@ private:
 
 	bool m_bBroadcastMic;
 	bool m_bOpenSpeaker;
+	bool m_bPlayAudio;
 	bool m_bRecord;
 
 	std::vector<RemoteAudioInfo> m_vecRemoteAudioInfo;
