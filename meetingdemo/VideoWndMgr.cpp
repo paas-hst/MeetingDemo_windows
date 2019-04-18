@@ -12,22 +12,14 @@
 #include "SdkManager.h"
 #include "define.h"
 
-/*------------------------------------------------------------------------------
- * 描  述：构造函数
- * 参  数：无
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 CVideoWndMgr::CVideoWndMgr()
 {
 	ZeroMemory(&m_rectCanvas, sizeof(m_rectCanvas));
 	ZeroMemory(m_aVideoWnd, sizeof(m_aVideoWnd));
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：析构函数
- * 参  数：无
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 CVideoWndMgr::~CVideoWndMgr()
 {
 	for (int i = 0; i < VIDEO_WND_COUNT; i++)
@@ -37,11 +29,7 @@ CVideoWndMgr::~CVideoWndMgr()
 	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：添加广播摄像头
- * 参  数：[in] dwCamIndex 摄像头索引
- * 返回值：成功/失败
-------------------------------------------------------------------------------*/
+
 bool CVideoWndMgr::AddBroadcastCam(DWORD dwCamIndex)
 {
 	// 是否重复广播视频
@@ -73,11 +61,7 @@ bool CVideoWndMgr::AddBroadcastCam(DWORD dwCamIndex)
 	return false;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：删除广播的摄像头
- * 参  数：[in] dwCamIndex 摄像头索引
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CVideoWndMgr::DelBroadcastCam(DWORD dwCamIndex)
 {
 	for (int i = 0; i < VIDEO_WND_COUNT; i++)
@@ -87,11 +71,7 @@ void CVideoWndMgr::DelBroadcastCam(DWORD dwCamIndex)
 	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：计算视频小窗口的矩形区域
- * 参  数：[in] bShow 是否显示
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CVideoWndMgr::CalCFloatWndRect(bool bShow)
 {
 	// 计算视频窗口显示位置和大小（两行三列）
@@ -110,23 +90,18 @@ void CVideoWndMgr::CalCFloatWndRect(bool bShow)
 	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：初始化
- * 参  数：[in] hParentWnd 父窗口
- *         [in] rectCanvas 所有视频子窗口的背景窗口矩形区域
- * 返回值：成功/失败
-------------------------------------------------------------------------------*/
+
 void CVideoWndMgr::SetWndRect(const RECT& rect)
 {
 	m_rectCanvas = rect;
-	CalCFloatWndRect(true);
+	
+	if (HasMaximizedWnd())
+		MaximizeDisplayWnd();
+	else
+		CalCFloatWndRect(true);
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：初始化
- * 参  数：[in] hParentWnd 父窗口
- * 返回值：成功/失败
-------------------------------------------------------------------------------*/
+
 void CVideoWndMgr::Init(HWND hParentWnd)
 {
 	m_hParenWnd = hParentWnd;
@@ -140,11 +115,7 @@ void CVideoWndMgr::Init(HWND hParentWnd)
 	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：是否有被双击放大的视频窗口
- * 参  数：无
- * 返回值：是/否
-------------------------------------------------------------------------------*/
+
 bool CVideoWndMgr::HasMaximizedWnd()
 {
 	bool bHasMaxWnd = false;
@@ -160,11 +131,7 @@ bool CVideoWndMgr::HasMaximizedWnd()
 	return bHasMaxWnd;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：处理窗口最大化
- * 参  数：无
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CVideoWndMgr::MaximizeDisplayWnd()
 {
 	for (int i = 0; i < VIDEO_WND_COUNT; i++)
@@ -185,13 +152,7 @@ void CVideoWndMgr::MaximizeDisplayWnd()
 	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：处理鼠标双击事件
- * 参  数：[in] uMsg	消息类型
- *         [in] wParam	参数
- *         [in] lParam	参数
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CVideoWndMgr::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (uMsg == WM_LBUTTONDBLCLK)
@@ -203,12 +164,7 @@ void CVideoWndMgr::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：添加远端用户的某一路视频
- * 参  数：[in] strUserId	用户ID
- *         [in] strVideoId	视频ID
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CVideoWndMgr::AddRemoteVideo(const fsp::String& strUserId, const fsp::String& strVideoId)
 {
 	// 重复广播视频
@@ -244,12 +200,7 @@ void CVideoWndMgr::AddRemoteVideo(const fsp::String& strUserId, const fsp::Strin
 	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：删除远端用户的某一路视频
- * 参  数：[in] strUserId	用户ID
- *         [in] strVideoId	视频ID
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CVideoWndMgr::DelRemoteVideo(const fsp::String& strUserId, const fsp::String& strVideoId)
 {
 	for (int i = 0; i < VIDEO_WND_COUNT; i++)
@@ -262,11 +213,7 @@ void CVideoWndMgr::DelRemoteVideo(const fsp::String& strUserId, const fsp::Strin
 	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：添加远端某用户的音频
- * 参  数：[in] strUserId	用户ID
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CVideoWndMgr::AddRemoteAudio(const fsp::String& strUserId)
 {
 	// 重复广播音频
@@ -302,11 +249,7 @@ void CVideoWndMgr::AddRemoteAudio(const fsp::String& strUserId)
 	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：删除远端某用户的音频
- * 参  数：[in] strUserId	用户ID
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CVideoWndMgr::DelRemoteAudio(const fsp::String& strUserId)
 {
 	for (int i = 0; i < VIDEO_WND_COUNT; i++)
@@ -319,11 +262,7 @@ void CVideoWndMgr::DelRemoteAudio(const fsp::String& strUserId)
 	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：添加本地广播的麦克风
- * 参  数：[in] dwMicIndex 麦克风索引
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CVideoWndMgr::AddBroadcastMic(DWORD dwMicIndex)
 {
 	// 重复广播音频
@@ -355,25 +294,17 @@ void CVideoWndMgr::AddBroadcastMic(DWORD dwMicIndex)
 	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：删除本地广播的麦克风
- * 参  数：[in] dwMicIndex 麦克风索引
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CVideoWndMgr::DelBroadcastMic(DWORD dwMicIndex)
 {
 	for (int i = 0; i < VIDEO_WND_COUNT; i++)
 	{
-		if (m_aVideoWnd[i]->StopPublishMic(dwMicIndex))
+		if (m_aVideoWnd[i]->StopPublishMic())
 			return;
 	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：定时器处理
- * 参  数：无
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CVideoWndMgr::OnTimer()
 {
 	for (int i = 0; i < VIDEO_WND_COUNT; i++)
@@ -382,11 +313,26 @@ void CVideoWndMgr::OnTimer()
 	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：视频参数改变，要重新设置
- * 参  数：无
- * 返回值：无
-------------------------------------------------------------------------------*/
+void CVideoWndMgr::OnRemoteControlOperation(const fsp::String& user_id, fsp::RemoteControlOperationType operationType)
+{
+	for (int i = 0; i < VIDEO_WND_COUNT; i++)
+	{
+		if (m_aVideoWnd[i]->IsHoldRemoteVideo(user_id, fsp::RESERVED_VIDEOID_SCREENSHARE)) {
+			m_aVideoWnd[i]->OnRemoteControlOperation(operationType);
+			break;
+		}
+	}
+}
+
+void CVideoWndMgr::DelAllAV()
+{
+	for (int i = 0; i < VIDEO_WND_COUNT; i++)
+	{
+		m_aVideoWnd[i]->DelCurrentAV();
+	}
+}
+
+
 void CVideoWndMgr::OnVideoParamChanged()
 {
 	for (int i = 0; i < VIDEO_WND_COUNT; i++)

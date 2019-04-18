@@ -16,7 +16,6 @@
 #define INVALID_VOLUME						0xFFFFFFFF
 
 // 内部自定义消息
-#define DUILIB_MSG_LOGIN_RESULT				WM_USER + 100
 #define DUILIB_MSG_SET_MIC_DEV				WM_USER + 101
 #define DUILIB_MSG_SET_AUD_DEV				WM_USER + 102
 #define DUILIB_MSG_SET_MIC_VOL				WM_USER + 103
@@ -30,6 +29,10 @@
 #define DUILIB_MSG_CHANGE_CAM_FAILED		WM_USER + 111
 #define	DUILIB_MSG_BROADCAST_CAM_FAILED		WM_USER + 112
 #define	DUILIB_MSG_VIDEO_PARAM_CHANGED		WM_USER + 113
+#define DUILIB_MSG_CONNECT_LOST             WM_USER + 114
+#define DUILIB_MSG_FSP_EVENT				WM_USER + 115
+#define DUILIB_MSG_REMOTECONTROL_EVENT      WM_USER + 116
+#define DUILIB_MSG_DEVICECHANGE             WM_USER + 117
 
 // 登录结果
 #define LOGIN_SUCCESS		1
@@ -81,6 +84,30 @@ struct RemoteVideoInfo
 struct RemoteAudioInfo
 {
 	fsp::String strUserId;
+};
+
+struct RemoteControlInfo
+{
+	fsp::String strUserId;
+	fsp::RemoteControlOperationType operationType;
+};
+
+struct ScreenShareConfig
+{
+	fsp::ScreenShareQualityBias qualityBias;
+	int left;
+	int top;
+	int right;
+	int bottom;
+
+	ScreenShareConfig()
+	{
+		qualityBias = fsp::SCREEN_SHARE_BIAS_QUALITY;
+		left = 0;
+		top = 0;
+		right = 0;
+		bottom = 0;
+	}
 };
 
 struct IEventCallback

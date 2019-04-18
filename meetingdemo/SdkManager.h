@@ -15,16 +15,17 @@
 
 using namespace fsp;
 
-class CSdkManager : public IFspEngineEventHandler, public IFspEngineDataHandler
+//为了处理fsp事件转到主线程的消息，所以从WindowImplBase继承
+class CSdkManager : public IFspEngineEventHandler, public WindowImplBase
 {
 public:
 	static CSdkManager& GetInstance();
-
+	
 	bool Init();
-	void Start();
-	void SetRestart();
+	void Destroy();
 
-	void OnLoginResult(fsp::ErrCode result);
+	void OpenLoginWnd();
+
 	void JoinGroup(LPCTSTR szGroup, LPCTSTR szUser);
 
 	void SetOpenMic(DWORD dwMicIndex);
@@ -51,25 +52,24 @@ public:
 	void SetFrameRate(DWORD dwFrameRate);
 	DWORD GetFrameRate();
 
+	void SetScreenShareConfig(const ScreenShareConfig& config);
+	ScreenShareConfig GetScreenShareConfig() const;
+
 	IFspEngine* GetFspEngin() { return m_pFspEngin; }
 
 	CDuiFrameWnd* GetFrameWnd() { return m_pDuiFrameWnd; }
-
-	void StartRecordLocalVideo(int nDevId);
-	void StopRecordLocalVideo(int nDevId);
-
-	void StartRecordLocalAudio();
-	void StopRecordLocalAudio();
-
-	void StartRecordRemoteVideo(const std::string& user_id, const std::string& video_id);
-	void StopRecordRemoteVideo(const std::string& user_id, const std::string& video_id);
-
-	void StartRecordRemoteAudio(const std::string& user_id);
-	void StopRecordRemoteAudio(const std::string& user_id);
-
 private:
 	CSdkManager();
 	~CSdkManager();
+	
+	virtual LRESULT HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) override;
+
+	virtual CDuiString GetSkinFolder() override;
+	virtual CDuiString GetSkinFile() override;
+	virtual LPCTSTR GetWindowClassName(void) const override;
+	
+	void OnFspEvent(fsp::EventType eventType, fsp::ErrCode result);
+	void ShowErrorWnd(const CDuiString& strErrInfo);
 
 	virtual void OnDeviceChange(DeviceEventType device_event) override;
 	virtual void OnEvent(EventType event_type, ErrCode err_code) override;
@@ -79,22 +79,16 @@ private:
 	virtual void OnRemoteAudioEvent(const String& user_id, 
 		RemoteAudioEventType remote_audio_event) override;
 
-	virtual void OnScreenShareEvent(const String &user_id, ScreenShareEventType screen_share_event) {}
-	virtual void OnScreenShareRemoteControlEvent(const String& user_id, const String& src_user_name, ScreenShareRemoteControlEventType event_type) {}
-
-	virtual void OnLocalAudioStreamRawData(const char* data, int data_len) override;
-	virtual void OnRemoteAudioStreamRawData(const String& user_id, const char* data, int data_len) override;
-	virtual void OnMixAudioStreamRawData(const char* data, int data_len) override;
-	virtual void OnLocalVideoStreamRawData(int camera_id, BitmapInfoHeader* header, const char* data, int data_len) override;
-	virtual void OnRemoteVideoStreamRawData(const String& user_id, const String& video_id, BitmapInfoHeader* header, const char* data, int data_len) override;
+	virtual void OnRemoteControlOperationEvent(const String& user_id,
+		fsp::RemoteControlOperationType operation_type);
 
 	std::string BuildToken(char* szGroupId, char* szUserId);
 
 private:
-	CDuiLoginWnd*		m_pDuiLoginWnd;
-	CDuiLoginWaitWnd*	m_pDuiLoginWaitWnd;
-	CDuiLoginErrorWnd*	m_pDuiLoginErrorWnd;
-	CDuiFrameWnd*		m_pDuiFrameWnd;
+	CDuiLoginWnd*		m_pDuiLoginWnd = nullptr;
+	CDuiLoginWaitWnd*	m_pDuiLoginWaitWnd = nullptr;
+	CDuiLoginErrorWnd*	m_pDuiLoginErrorWnd = nullptr;
+	CDuiFrameWnd*		m_pDuiFrameWnd = nullptr;
 
 	IFspEngine*			m_pFspEngin;
 	FspEngineContext	m_FspEnginContext;
@@ -110,10 +104,8 @@ private:
 
 	DWORD m_dwResolutionIndex;	// 分辨率
 	DWORD m_dwFrameRate;		// 帧率
-
-	// 确保主窗口创建后再处理SDK回调消息，否则会崩溃
-	bool	m_bMainFrameCreated;
-	HANDLE	m_bSemaphore;
+	
+	ScreenShareConfig m_screenShareConfig;
 
 	bool m_bRestart;
 };

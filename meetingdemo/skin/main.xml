@@ -15,11 +15,12 @@
 		<HorizontalLayout bkcolor="#FFF0F0F0" />
 		<!-- 底部操作栏 -->
 		<HorizontalLayout name="toolbar_layout" height="90" bkimage="img\\video\\toolbar_bg.png">
-			<Button name="btn_mic" tooltip="广播麦克风" height="60" width="60" normalimage="img\\video\\toolbar_mic.png" hotimage="img\\video\\toolbar_mic_hot.png" pushedimage="img\\video\\toolbar_mic_pressed.png" padding="420, 15, 20, 15" />
+		    <Control />
+			<Button name="btn_mic" tooltip="广播麦克风" height="60" width="60" normalimage="img\\video\\toolbar_mic.png" hotimage="img\\video\\toolbar_mic_hot.png" pushedimage="img\\video\\toolbar_mic_pressed.png" padding="20, 15, 20, 15" />
 			<Button name="btn_cam" tooltip="广播摄像头" height="60" width="60" normalimage="img\\video\\toolbar_cam.png" hotimage="img\\video\\toolbar_cam_hot.png" pushedimage="img\\video\\toolbar_cam_pressed.png" padding="20, 15, 20, 15" />
-			<Button name="btn_aud" tooltip="播放音频" height="60" width="60" normalimage="img\\video\\toolbar_audio.png" hotimage="img\\video\\toolbar_audio_hot.png" pushedimage="img\\video\\toolbar_audio_pressed.png" padding="20, 15, 20, 15" />
-			<Button name="btn_record" tooltip="录制" height="60" width="60" normalimage="img\\video\\toolbar_recorder.png" hotimage="img\\video\\toolbar_recorder_hot.png" pushedimage="img\\video\\toolbar_recorder_pressed.png" padding="20, 15, 20, 15" />
+			<Button name="btn_screenshare" tooltip="屏幕共享" height="60" width="60" normalimage="img\\video\\toolbar_share.png" hotimage="img\\video\\toolbar_share_hot.png" pushedimage="img\\video\\toolbar_share_pressed.png" padding="20, 15, 20, 15" />
 			<Button name="btn_setting" tooltip="音视频设置" height="60" width="60" normalimage="img\\video\\toolbar_settings.png" hotimage="img\\video\\toolbar_settings_hot.png" pushedimage="img\\video\\toolbar_settings_pressed.png" padding="20, 15, 20, 15" />
+		    <Control />
 		</HorizontalLayout>
 	</VerticalLayout>
 </Window>

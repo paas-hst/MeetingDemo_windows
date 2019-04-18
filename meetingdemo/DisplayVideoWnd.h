@@ -39,7 +39,7 @@ public:
 	bool StopPublishCam(DWORD dwCamIndex);
 
 	void StartPublishMic(DWORD dwMicIndex);
-	bool StopPublishMic(DWORD dwMicIndex);
+	bool StopPublishMic();
 
 	void AddRemoteVideo(const fsp::String& strUserId, const fsp::String& strVideoId);
 	void DelRemoteVideo(const fsp::String& strUserId, const fsp::String& strVideoId);
@@ -47,11 +47,15 @@ public:
 	void AddRemoteAudio(const fsp::String& strUserId);
 	void DelRemoteAudio(const fsp::String& strUserId);
 
+	void DelCurrentAV();
+
 	void OnTimer();
 	void OnVideoParamChanged();
 
 	void SetEventCallback(IEventCallback* pCallback);
 	void ShowWindow(bool bShow);
+
+	void OnRemoteControlOperation(fsp::RemoteControlOperationType operation);
 
 private:
 	virtual void Notify(TNotifyUI& msg) override;
@@ -74,6 +78,13 @@ private:
 	void SetVideoParam();
 
 private:
+	enum RemoteControlState
+	{
+		RemoteControl_No,
+		RemoteControl_Waiting,
+		RemoteControl_Ing
+	};
+
 	CFloatWnd* m_pVideoWnd;
 	CFloatWnd* m_pInfoWnd;
 
@@ -87,13 +98,14 @@ private:
 	bool m_bIsLocal;
 
 	DWORD m_dwCamIndex;
-	DWORD m_dwMicIndex;
 
 	fsp::String m_strUserId;
 	fsp::String m_strVideoId;
 
 	bool m_bIsVideoMaximized;
 	RECT m_rectDisplay;
+
+	RemoteControlState m_RemoteControlState;
 
 	IEventCallback* m_pEventCallback;
 };

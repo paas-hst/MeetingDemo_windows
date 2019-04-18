@@ -27,14 +27,14 @@ CSdkManager::CSdkManager()
 	, m_dwMicSetVolume(50)
 	, m_dwResolutionIndex(0)	// 默认分辨率：320*240
 	, m_dwFrameRate(15)			// 默认帧率：15帧/秒
-	, m_bMainFrameCreated(false)
 	, m_pDuiLoginWnd(nullptr)
 	, m_pDuiLoginWaitWnd(nullptr)
 	, m_pDuiLoginErrorWnd(nullptr)
 	, m_pDuiFrameWnd(nullptr)
 	, m_bRestart(false)
 {
-	m_bSemaphore = CreateSemaphore(NULL, 0, 1, NULL);
+	Create(NULL, _T("CSdkManagerMsgWnd"), UI_WNDSTYLE_FRAME, WS_EX_WINDOWEDGE);
+	ShowWindow(false);
 }
 
 /*------------------------------------------------------------------------------
@@ -44,7 +44,7 @@ CSdkManager::CSdkManager()
 ------------------------------------------------------------------------------*/
 CSdkManager::~CSdkManager()
 {
-	FspReleaseEngine();
+	Destroy();
 }
 
 /*------------------------------------------------------------------------------
@@ -74,10 +74,7 @@ bool CSdkManager::Init()
 	m_FspEnginContext.app_id = config.bUserDefine ? config.strUserAppId.c_str() : config.strAppId.c_str();
 	m_FspEnginContext.log_path = "./";
 	m_FspEnginContext.event_handler = this;
-	m_FspEnginContext.data_handler = this;
 	m_FspEnginContext.server_addr = config.strServerAddr.c_str();
-	m_FspEnginContext.auto_play_audio = false;
-	m_FspEnginContext.auto_recv_audio = false;
 	
 	fsp::ErrCode result = m_pFspEngin->Init(m_FspEnginContext);
 	if (result != ERR_OK)
@@ -103,28 +100,74 @@ bool CSdkManager::Init()
 	return true;
 }
 
+void CSdkManager::Destroy()
+{
+	Close();
+	if (m_pDuiLoginErrorWnd) {
+		if (IsWindow(m_pDuiLoginErrorWnd->GetHWND()))
+			m_pDuiLoginErrorWnd->Close();
+		delete m_pDuiLoginErrorWnd;
+		m_pDuiLoginErrorWnd = nullptr;
+	}
+
+	if (m_pDuiLoginWnd) {
+		if (IsWindow(m_pDuiLoginWnd->GetHWND()))
+			m_pDuiLoginWnd->Close();
+		delete m_pDuiLoginWnd;
+		m_pDuiLoginWnd = nullptr;
+	}
+
+	if (m_pDuiFrameWnd) {
+		if (IsWindow(m_pDuiFrameWnd->GetHWND()))
+			m_pDuiFrameWnd->Close();
+		delete m_pDuiFrameWnd;
+		m_pDuiFrameWnd = nullptr;
+	}
+
+	if (m_pDuiLoginWaitWnd) {
+		if (IsWindow(m_pDuiLoginWaitWnd->GetHWND()))
+			m_pDuiLoginWaitWnd->Close();
+		delete m_pDuiLoginWaitWnd;
+		m_pDuiLoginWaitWnd = nullptr;
+	}
+
+	FspReleaseEngine();
+}
+
 /*------------------------------------------------------------------------------
  * 描  述：启动
  * 参  数：无
  * 返回值：无
 ------------------------------------------------------------------------------*/
-void CSdkManager::Start()
+void CSdkManager::OpenLoginWnd()
 {
-	m_pDuiLoginWnd = new CDuiLoginWnd;
-	m_pDuiLoginWnd->Create(NULL, _T("CDuiLoginWnd"), UI_WNDSTYLE_DIALOG, WS_EX_WINDOWEDGE);
-	m_pDuiLoginWnd->CenterWindow();
-	m_pDuiLoginWnd->ShowModal();
+	if (m_pDuiLoginErrorWnd == nullptr) {
+		m_pDuiLoginErrorWnd = new CDuiLoginErrorWnd();
+		m_pDuiLoginErrorWnd->Create(NULL, _T("LoginError"), UI_WNDSTYLE_FRAME, WS_EX_WINDOWEDGE);
 
-	if (m_bRestart)
-	{
-		m_bRestart = false;
-		Start();
 	}
-}
 
-void CSdkManager::SetRestart()
-{
-	m_bRestart = true;
+	if (m_pDuiLoginWnd == nullptr) {
+		m_pDuiLoginWnd = new CDuiLoginWnd;
+		m_pDuiLoginWnd->Create(NULL, _T("Login"), UI_WNDSTYLE_FRAME, WS_EX_WINDOWEDGE);
+	}
+
+	if (m_pDuiFrameWnd == nullptr) {
+		m_pDuiFrameWnd = new CDuiFrameWnd;
+		m_pDuiFrameWnd->Create(NULL, _T("Main"), UI_WNDSTYLE_FRAME, WS_EX_WINDOWEDGE);
+	}
+
+	if (m_pDuiLoginWaitWnd == nullptr) {
+		m_pDuiLoginWaitWnd = new CDuiLoginWaitWnd();
+		m_pDuiLoginWaitWnd->Create(NULL, _T("Logining"), UI_WNDSTYLE_FRAME, WS_EX_WINDOWEDGE);
+	}
+
+	m_pDuiLoginErrorWnd->ShowWindow(false);
+	m_pDuiFrameWnd->ShowWindow(false);
+	m_pDuiLoginWaitWnd->ShowWindow(false);
+
+	m_pDuiLoginWnd->CenterWindow();
+	m_pDuiLoginWnd->ShowWindow(true);
 }
 
 /*------------------------------------------------------------------------------
@@ -237,6 +280,16 @@ void CSdkManager::SetFrameRate(DWORD dwFrameRate)
 	}
 }
 
+void CSdkManager::SetScreenShareConfig(const ScreenShareConfig& config)
+{
+	m_screenShareConfig = config;
+}
+
+ScreenShareConfig CSdkManager::GetScreenShareConfig() const
+{
+	return m_screenShareConfig;
+}
+
 /*------------------------------------------------------------------------------
  * 描  述：获取本地全局摄像头帧率
  * 参  数：无
@@ -278,7 +331,7 @@ DWORD CSdkManager::GetResolution()
 ------------------------------------------------------------------------------*/
 void CSdkManager::OnDeviceChange(DeviceEventType device_event)
 {
-	//MessageBox(NULL, L"OnDeviceChange", L"Info", 0);
+	m_pDuiFrameWnd->PostMessageW(DUILIB_MSG_DEVICECHANGE, 0, 0);
 }
 
 /*------------------------------------------------------------------------------
@@ -289,47 +342,66 @@ void CSdkManager::OnDeviceChange(DeviceEventType device_event)
 ------------------------------------------------------------------------------*/
 void CSdkManager::OnEvent(EventType event_type, ErrCode err_code)
 {
-	if (event_type == EVENT_JOINGROUP_RESULT)
-	{
-		PostMessage(m_pDuiLoginWaitWnd->GetHWND(), DUILIB_MSG_LOGIN_RESULT, err_code, 0);
-	}
+	PostMessage(DUILIB_MSG_FSP_EVENT, event_type, err_code);
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：登录结果处理，从LoginWaitWnd线程回调过来
- * 参  数：[in] result 登录结果
- * 返回值：无
-------------------------------------------------------------------------------*/
-void CSdkManager::OnLoginResult(fsp::ErrCode result)
+LRESULT CSdkManager::HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
-	assert(m_pDuiLoginWnd);
-	
-	// 隐藏登录等待窗口
-	m_pDuiLoginWaitWnd->ShowWindow(false);
+	if (uMsg == DUILIB_MSG_FSP_EVENT) {
+		EventType event_type = (EventType)wParam;
+		ErrCode err_code = (ErrCode)lParam;
 
-	if (result == ErrCode::ERR_OK) // 登录成功，显示主窗口
-	{
-		if (!m_bMainFrameCreated)
+		OnFspEvent(event_type, err_code);
+
+		bHandled = TRUE;
+	}
+
+	return S_OK;
+}
+
+void CSdkManager::OnFspEvent(fsp::EventType eventType, fsp::ErrCode result)
+{
+	if (eventType == fsp::EVENT_JOINGROUP_RESULT) {
+		assert(m_pDuiLoginWnd);
+
+		// 隐藏登录等待窗口
+		m_pDuiLoginWaitWnd->ShowWindow(false);
+
+		if (result == ErrCode::ERR_OK) // 登录成功，显示主窗口
 		{
-			m_pDuiFrameWnd = new CDuiFrameWnd;
-			m_pDuiFrameWnd->Create(NULL, _T("CDuiFrameWnd"), UI_WNDSTYLE_DIALOG, WS_EX_WINDOWEDGE);
+			m_pDuiLoginWnd->ShowWindow(false);
+
 			m_pDuiFrameWnd->CenterWindow();
+			m_pDuiFrameWnd->ShowWindow(true);
+		}
+		else // 登录失败，跳转到失败页面
+		{
+			CDuiString strErrInfo = L"未知错误:";
+			if (result == ErrCode::ERR_TOKEN_INVALID)
+				strErrInfo = L"认证失败！";
+			else if (result == ErrCode::ERR_CONNECT_FAIL)
+				strErrInfo = L"连接服务器失败！";
+			else if (result == ErrCode::ERR_APP_NOT_EXIST)
+				strErrInfo = L"应用不存在！";
+			else if (result == ErrCode::ERR_USERID_CONFLICT)
+				strErrInfo = L"用户已登录！";
+			else if (result == ErrCode::ERR_NO_BALANCE)
+				strErrInfo = L"账户余额不足！";
+			else
+			{
+				WCHAR szTmp[8];
+				_snwprintf_s(szTmp, 8, L"%d", result);
+				strErrInfo.Append(szTmp);
+			}
 
-			m_bMainFrameCreated = true;
-			ReleaseSemaphore(m_bSemaphore, 1, 0);
-
-			m_pDuiFrameWnd->ShowModal();
+			ShowErrorWnd(strErrInfo);
 		}
 	}
-	else // 登录失败，跳转到失败页面
-	{		
-		m_pDuiLoginErrorWnd = new CDuiLoginErrorWnd(result);
-		m_pDuiLoginErrorWnd->Create(NULL, _T("CDuiLoginErrorWnd"), UI_WNDSTYLE_DIALOG, WS_EX_WINDOWEDGE);
-		m_pDuiLoginErrorWnd->CenterWindow();
-		m_pDuiLoginErrorWnd->ShowModal();
+	else if (eventType == fsp::EVENT_CONNECT_LOST){
+		m_pDuiFrameWnd->ResetWindowStatus();
+		//连接断开，显示失败窗口
+		ShowErrorWnd(L"连接断开");
 	}
-
-	m_pDuiLoginWaitWnd->Close();
 }
 
 /*------------------------------------------------------------------------------
@@ -341,9 +413,6 @@ void CSdkManager::OnLoginResult(fsp::ErrCode result)
 ------------------------------------------------------------------------------*/
 void CSdkManager::OnRemoteVideoEvent(const String& user_id, const String& video_id, RemoteVideoEventType remote_video_event)
 {
-	if (!m_bMainFrameCreated)
-		WaitForSingleObject(m_bSemaphore, INFINITE);
-
 	RemoteVideoInfo* pInfo = new RemoteVideoInfo;
 	pInfo->strUserId = user_id;
 	pInfo->strVideoId = video_id;
@@ -366,20 +435,34 @@ void CSdkManager::OnRemoteVideoEvent(const String& user_id, const String& video_
 ------------------------------------------------------------------------------*/
 void CSdkManager::OnRemoteAudioEvent(const String& user_id, RemoteAudioEventType remote_audio_event)
 {
-	if (!m_bMainFrameCreated)
-		WaitForSingleObject(m_bSemaphore, INFINITE);
+	if (m_pDuiFrameWnd && IsWindow(m_pDuiFrameWnd->GetHWND())) {
+		RemoteAudioInfo* pInfo = new RemoteAudioInfo;
+		pInfo->strUserId = user_id;
 
-	RemoteAudioInfo* pInfo = new RemoteAudioInfo;
+		if (REMOTE_AUDIO_EVENT_PUBLISHE_STARTED == remote_audio_event)
+		{
+			m_pDuiFrameWnd->PostMessageW(DUILIB_MSG_ADD_REMOTE_AUDIO, (WPARAM)pInfo, 0);
+		}
+		else if (REMTOE_AUDIO_EVENT_PUBLISHE_STOPED == remote_audio_event)
+		{
+			m_pDuiFrameWnd->PostMessageW(DUILIB_MSG_DEL_REMOTE_AUDIO, (WPARAM)pInfo, 0);
+		}
+	}
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：远程控制事件
+ * 参  数：[in] user_id  	    用户ID
+ *         [in] operation_type	类型
+ * 返回值：Token
+------------------------------------------------------------------------------*/
+void CSdkManager::OnRemoteControlOperationEvent(const String& user_id,
+	fsp::RemoteControlOperationType operation_type)
+{
+	RemoteControlInfo* pInfo = new RemoteControlInfo;
 	pInfo->strUserId = user_id;
-
-	if (REMOTE_AUDIO_EVENT_PUBLISHE_STARTED == remote_audio_event)
-	{
-		m_pDuiFrameWnd->PostMessageW(DUILIB_MSG_ADD_REMOTE_AUDIO, (WPARAM)pInfo, 0);
-	}
-	else if (REMTOE_AUDIO_EVENT_PUBLISHE_STOPED == remote_audio_event)
-	{
-		m_pDuiFrameWnd->PostMessageW(DUILIB_MSG_DEL_REMOTE_AUDIO, (WPARAM)pInfo, 0);
-	}
+	pInfo->operationType = operation_type;
+	m_pDuiFrameWnd->PostMessage(DUILIB_MSG_REMOTECONTROL_EVENT, (WPARAM)pInfo, 0);
 }
 
 /*------------------------------------------------------------------------------
@@ -429,12 +512,8 @@ void CSdkManager::JoinGroup(LPCTSTR szGroup, LPCTSTR szUser)
 	m_pDuiLoginWnd->ShowWindow(false);
 
 	// 显示登录等待窗口
-	m_pDuiLoginWaitWnd = new CDuiLoginWaitWnd();
-	m_pDuiLoginWaitWnd->Create(NULL, _T("CDuiLoginWaitWnd"), UI_WNDSTYLE_DIALOG, WS_EX_WINDOWEDGE);
 	m_pDuiLoginWaitWnd->CenterWindow();
-	m_pDuiLoginWaitWnd->ShowModal();
-
-	m_pDuiLoginWnd->Close();
+	m_pDuiLoginWaitWnd->ShowWindow(true);
 }
 
 /*------------------------------------------------------------------------------
@@ -477,183 +556,29 @@ const CDuiString& CSdkManager::GetLoginUser()
 	return m_strUser;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：本地音频数据回调处理，此处直接写文件
- * 参  数：[in] data 数据
- *         [in] data_len 数据长度
- * 返回值：无
-------------------------------------------------------------------------------*/
-void CSdkManager::OnLocalAudioStreamRawData(const char* data, int data_len)
+void CSdkManager::ShowErrorWnd(const CDuiString& strErrInfo)
 {
-	string strRecorFile = "LocalAudio.data";
-	std::ofstream ofs(strRecorFile, std::ios_base::binary | std::ios_base::app);
-	ofs.write(data, data_len);
+	//先隐藏主窗口
+	if (m_pDuiFrameWnd) {
+		m_pDuiFrameWnd->ShowWindow(false);
+	}
+
+	m_pDuiLoginErrorWnd->UpdateErrInfo(strErrInfo);
+	m_pDuiLoginErrorWnd->CenterWindow();
+	m_pDuiLoginErrorWnd->ShowWindow(true);
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：远端音频数据回调处理，此处直接写文件
- * 参  数：[in] user_id 远端用户标识
- *         [in] data 数据
- *         [in] data_len 数据长度
- * 返回值：无
-------------------------------------------------------------------------------*/
-void CSdkManager::OnRemoteAudioStreamRawData(const String& user_id, const char* data, int data_len)
+CDuiString CSdkManager::GetSkinFolder()
 {
-	string strRecorFile = "RemoteAudio_" + string(user_id.c_str()) + ".data";
-	std::ofstream ofs(strRecorFile, std::ios_base::binary | std::ios_base::app);
-	ofs.write(data, data_len);
+	return CDuiString(L"skin");
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：本地麦克风/远端用户音频数据回调处理，此处直接写文件
- * 参  数：[in] data 数据
- *         [in] data_len 数据长度
- * 返回值：无
-------------------------------------------------------------------------------*/
-void CSdkManager::OnMixAudioStreamRawData(const char* data, int data_len)
+CDuiString CSdkManager::GetSkinFile()
 {
-	MessageBox(NULL, L"OnAudioMixedStreamRawData", L"Callback", 0);
+	return CDuiString(L"emptywnd.xml");
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：本地视频数据回调处理，此处直接写文件
- * 参  数：[in] camera_id 本地摄像头索引
- *         [in] header 视频头信息，具体见BitmapInfoHeader的注释
- *         [in] data 数据
- *         [in] data_len 数据长度
- * 返回值：无
-------------------------------------------------------------------------------*/
-void CSdkManager::OnLocalVideoStreamRawData(int camera_id, BitmapInfoHeader* header, const char* data, int data_len)
+LPCTSTR CSdkManager::GetWindowClassName(void) const
 {
-	std::ostringstream convert;
-	convert << camera_id;
-	string strRecorFile = "LocalVideo" + convert.str() + ".data";
-	std::ofstream ofs(strRecorFile, std::ios_base::binary | std::ios_base::app);
-	ofs.write(data, data_len);
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：远端视频数据回调处理，此处直接写文件
- * 参  数：[in] user_id 远端用户标识
- *         [in] video_id 远端视频标识
- *         [in] header 视频头信息，具体见BitmapInfoHeader的注释
- *         [in] data 数据
- *         [in] data_len 数据长度
- * 返回值：无
-------------------------------------------------------------------------------*/
-void CSdkManager::OnRemoteVideoStreamRawData(const String& user_id, const String& video_id, BitmapInfoHeader* header, const char* data, int data_len)
-{
-	string strRecorFile = "RemoteVideo_" + string(user_id.c_str()) + "_" + string(video_id.c_str()) +".data";
-	std::ofstream ofs(strRecorFile, std::ios_base::binary | std::ios_base::app);
-	ofs.write(data, data_len);
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：启动本地视频录制
- * 参  数：[in] nDevId 本地摄像头索引
- * 返回值：无
-------------------------------------------------------------------------------*/
-void CSdkManager::StartRecordLocalVideo(int nDevId)
-{
-	fsp::CallbackDataDesc data_desc;
-	data_desc.data_type = CALLBACK_DATA_LOCAL_VIDEO_RAW;
-	data_desc.camera_id = nDevId;
-	m_pFspEngin->SetCallbackDataState(data_desc, true);
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：停止本地视频录制
- * 参  数：[in] nDevId 本地摄像头索引
- * 返回值：无
-------------------------------------------------------------------------------*/
-void CSdkManager::StopRecordLocalVideo(int nDevId)
-{
-	fsp::CallbackDataDesc data_desc;
-	data_desc.data_type = CALLBACK_DATA_LOCAL_VIDEO_RAW;
-	data_desc.camera_id = nDevId;
-	m_pFspEngin->SetCallbackDataState(data_desc, false);
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：启动本地音频录制
- * 参  数：无
- * 返回值：无
-------------------------------------------------------------------------------*/
-void CSdkManager::StartRecordLocalAudio()
-{
-	fsp::CallbackDataDesc data_desc;
-	data_desc.data_type = CALLBACK_DATA_LOCAL_AUDIO_RAW;
-	m_pFspEngin->SetCallbackDataState(data_desc, true);
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：停止本地音频录制
- * 参  数：无
- * 返回值：无
-------------------------------------------------------------------------------*/
-void CSdkManager::StopRecordLocalAudio()
-{
-	fsp::CallbackDataDesc data_desc;
-	data_desc.data_type = CALLBACK_DATA_LOCAL_AUDIO_RAW;
-	m_pFspEngin->SetCallbackDataState(data_desc, false);
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：启动远端视频录制
- * 参  数：[in] user_id 远端用户标识
- *         [in] video_id 远端视频标识
- * 返回值：无
-------------------------------------------------------------------------------*/
-void CSdkManager::StartRecordRemoteVideo(const std::string& user_id, const std::string& video_id)
-{
-	fsp::CallbackDataDesc data_desc;
-	data_desc.data_type = CALLBACK_DATA_REMOTE_VIDEO_RAW;
-	data_desc.user_id = user_id.c_str();
-	data_desc.video_id = video_id.c_str();
-	
-	m_pFspEngin->SetCallbackDataState(data_desc, true);
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：停止远端视频录制
- * 参  数：[in] user_id 远端用户标识
- *         [in] video_id 远端视频标识
- * 返回值：无
-------------------------------------------------------------------------------*/
-void CSdkManager::StopRecordRemoteVideo(const std::string& user_id, const std::string& video_id)
-{
-	fsp::CallbackDataDesc data_desc;
-	data_desc.data_type = CALLBACK_DATA_REMOTE_VIDEO_RAW;
-	data_desc.user_id = user_id.c_str();
-	data_desc.video_id = video_id.c_str();
-
-	m_pFspEngin->SetCallbackDataState(data_desc, false);
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：启动远端音频录制
- * 参  数：[in] user_id 远端用户标识
- * 返回值：无
-------------------------------------------------------------------------------*/
-void CSdkManager::StartRecordRemoteAudio(const std::string& user_id)
-{
-	fsp::CallbackDataDesc data_desc;
-	data_desc.data_type = CALLBACK_DATA_REMOTE_AUDIO_RAW;
-	data_desc.user_id = user_id.c_str();
-
-	m_pFspEngin->SetCallbackDataState(data_desc, true);
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：停止远端音频录制
- * 参  数：[in] user_id 远端用户标识
- * 返回值：无
-------------------------------------------------------------------------------*/
-void CSdkManager::StopRecordRemoteAudio(const std::string& user_id)
-{
-	fsp::CallbackDataDesc data_desc;
-	data_desc.data_type = CALLBACK_DATA_REMOTE_AUDIO_RAW;
-	data_desc.user_id = user_id.c_str();
-
-	m_pFspEngin->SetCallbackDataState(data_desc, false);
+	return L"CSdkManagerMsgWnd";
 }

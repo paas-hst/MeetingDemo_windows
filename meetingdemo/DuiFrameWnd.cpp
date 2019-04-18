@@ -26,66 +26,47 @@ DUI_BEGIN_MESSAGE_MAP(CDuiFrameWnd, WindowImplBase)
 	DUI_ON_MSGTYPE(DUI_MSGTYPE_SELECTCHANGED, OnSelectChanged)
 DUI_END_MESSAGE_MAP()
 
-/*------------------------------------------------------------------------------
- * 描  述：构造函数
- * 参  数：无
- * 返回值：无
- ------------------------------------------------------------------------------*/
+
 CDuiFrameWnd::CDuiFrameWnd()
-	: m_bVideoWndInitFlag(false)
-	, m_bBroadcastMic(false)
-	, m_bOpenSpeaker(false)
-	, m_bPlayAudio(false)
-	, m_bRecord(false)
 {
+	m_bVideoWndInitFlag = false;
+	m_bBroadcastMic = false;
+	m_isScreenSharing = false;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：析构函数
- * 参  数：无
- * 返回值：无
- ------------------------------------------------------------------------------*/
+
 CDuiFrameWnd::~CDuiFrameWnd()
 {
-	if (m_bRecord)
-		StopRecord();
+
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：虚拟函数，DUI调用获取窗口xml布局文件目录
- * 参  数：无
- * 返回值：xml布局文件目录
- ------------------------------------------------------------------------------*/
+void CDuiFrameWnd::ResetWindowStatus()
+{
+	m_VideoWndMgr.DelAllAV();
+	
+	SetToolbarCamBtnStatus(false);
+	SetToolbarMicBtnStatus(false);
+	SetToolbarScreenshareBtnStatus(false);
+}
+
 CDuiString CDuiFrameWnd::GetSkinFolder()
 {
 	return CDuiString(L"skin");
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：虚拟函数，DUI调用获取窗口xml布局文件名称
- * 参  数：无
- * 返回值：xml布局文件名称
- ------------------------------------------------------------------------------*/
+
 CDuiString CDuiFrameWnd::GetSkinFile()
 {
 	return CDuiString(L"main.xml");
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：虚拟函数，DUI调用获取窗口类名称
- * 参  数：无
- * 返回值：窗口类名称
- ------------------------------------------------------------------------------*/
+
 LPCTSTR CDuiFrameWnd::GetWindowClassName(void) const
 {
 	return L"CDuiFrameWnd";
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：虚拟函数，DUI调用完成窗口初始化
- * 参  数：无
- * 返回值：无
- ------------------------------------------------------------------------------*/
+
 void CDuiFrameWnd::InitWindow()
 {
 	if (!m_bVideoWndInitFlag)
@@ -94,113 +75,13 @@ void CDuiFrameWnd::InitWindow()
 		m_bVideoWndInitFlag = true;
 	}
 
-	WCHAR szCaption[128];
-	_snwprintf(szCaption, 64, L"Group ID：%s    User ID：%s", 
-		CSdkManager::GetInstance().GetLoginGroup().GetData(), 
-		CSdkManager::GetInstance().GetLoginUser().GetData());
-
-	CLabelUI* pCapLabel = (CLabelUI*)m_PaintManager.FindControl(L"group_user");
-	pCapLabel->SetText(szCaption);
-
 	m_PaintManager.SetTimer(m_PaintManager.FindControl(L"btn_mic"), 
 		UPDATE_VIDEO_INFO_TIMER_ID, UPDATE_VIDEO_INFO_INTERVAL);
 
 	SetIcon(IDI_FSPCLIENT);
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：刷新主窗口工具栏麦克风背景图片，广播状态和未广播状态的背景图片不一样
- * 参  数：无
- * 返回值：无
-------------------------------------------------------------------------------*/
-void CDuiFrameWnd::RefreshMicBtnBkImg()
-{
-	CControlUI* pBtnMic = m_PaintManager.FindControl(L"btn_mic");
-	if (m_bBroadcastMic)
-	{
-		pBtnMic->SetAttribute(L"normalimage", L"img\\video\\toolbar_mic_open.png");
-		pBtnMic->SetAttribute(L"hotimage", L"img\\video\\toolbar_mic_open_hot.png");
-		pBtnMic->SetAttribute(L"pushedimage", L"img\\video\\toolbar_mic_open_pressed.png");
-	}
-	else
-	{
-		pBtnMic->SetAttribute(L"normalimage", L"img\\video\\toolbar_mic.png");
-		pBtnMic->SetAttribute(L"hotimage", L"img\\video\\toolbar_mic_hot.png");
-		pBtnMic->SetAttribute(L"pushedimage", L"img\\video\\toolbar_mic_pressed.png");
-	}
-}
 
-/*------------------------------------------------------------------------------
- * 描  述：刷新主窗口工具栏录制背景图片
- * 参  数：无
- * 返回值：无
-------------------------------------------------------------------------------*/
-void CDuiFrameWnd::RefreshRecordBtnBkImg()
-{
-	CControlUI* pBtnRecord = m_PaintManager.FindControl(L"btn_record");
-	if (m_bRecord)
-	{
-		pBtnRecord->SetAttribute(L"normalimage", L"img\\video\\toolbar_recorder_open.png");
-		pBtnRecord->SetAttribute(L"hotimage", L"img\\video\\toolbar_recorder_open_hot.png");
-		pBtnRecord->SetAttribute(L"pushedimage", L"img\\video\\toolbar_recorder_open_pressed.png");
-	}
-	else
-	{
-		pBtnRecord->SetAttribute(L"normalimage", L"img\\video\\toolbar_recorder.png");
-		pBtnRecord->SetAttribute(L"hotimage", L"img\\video\\toolbar_recorder_hot.png");
-		pBtnRecord->SetAttribute(L"pushedimage", L"img\\video\\toolbar_recorder_pressed.png");
-	}
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：刷新主窗口工具栏摄像头背景图片，广播状态和未广播状态的背景图片不一样
- * 参  数：无
- * 返回值：无
- ------------------------------------------------------------------------------*/
-void CDuiFrameWnd::RefreshCamBtnBkImg()
-{
-	CControlUI* pBtnAud = m_PaintManager.FindControl(L"btn_cam");
-	if (!m_setCamOpenIndexes.empty())
-	{
-		pBtnAud->SetAttribute(L"normalimage", L"img\\video\\toolbar_cam_open.png");
-		pBtnAud->SetAttribute(L"hotimage", L"img\\video\\toolbar_cam_open_hot.png");
-		pBtnAud->SetAttribute(L"pushedimage", L"img\\video\\toolbar_cam_open_pressed.png");
-	}
-	else
-	{
-		pBtnAud->SetAttribute(L"normalimage", L"img\\video\\toolbar_cam.png");
-		pBtnAud->SetAttribute(L"hotimage", L"img\\video\\toolbar_cam_hot.png");
-		pBtnAud->SetAttribute(L"pushedimage", L"img\\video\\toolbar_cam_pressed.png");
-	}
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：刷新主窗口工具栏播放音频背景图片
- * 参  数：无
- * 返回值：无
- ------------------------------------------------------------------------------*/
-void CDuiFrameWnd::RefreshAudBtnBkImg()
-{
-	CControlUI* pBtnAud = m_PaintManager.FindControl(L"btn_aud");
-	if (m_bPlayAudio)
-	{
-		pBtnAud->SetAttribute(L"normalimage", L"img\\video\\toolbar_audio_open.png");
-		pBtnAud->SetAttribute(L"hotimage", L"img\\video\\toolbar_audio_open_hot.png");
-		pBtnAud->SetAttribute(L"pushedimage", L"img\\video\\toolbar_audio_open_pressed.png");
-	}
-	else
-	{
-		pBtnAud->SetAttribute(L"normalimage", L"img\\video\\toolbar_audio.png");
-		pBtnAud->SetAttribute(L"hotimage", L"img\\video\\toolbar_audio_hot.png");
-		pBtnAud->SetAttribute(L"pushedimage", L"img\\video\\toolbar_audio_pressed.png");
-	}
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：摄像头选择变化处理（通过菜单）
- * 参  数：[in] msg 通知消息
- * 返回值：无
- ------------------------------------------------------------------------------*/
 void CDuiFrameWnd::OnCamSelectChanged(TNotifyUI& msg)
 {
 	DWORD dwCamIndex = _wtoi(msg.pSender->GetName().GetData() + 4);
@@ -237,14 +118,10 @@ void CDuiFrameWnd::OnCamSelectChanged(TNotifyUI& msg)
 		}
 	}
 
-	RefreshCamBtnBkImg();
+	SetToolbarCamBtnStatus(!m_setCamOpenIndexes.empty());
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：Option控件选择变化通知处理，消息映射处理方法
- * 参  数：[in] msg 通知消息
- * 返回值：无
- ------------------------------------------------------------------------------*/
+
 void CDuiFrameWnd::OnSelectChanged(TNotifyUI& msg)
 {
 	if (_tcsncmp(msg.pSender->GetName(), L"cam_", 4) == 0)
@@ -253,11 +130,7 @@ void CDuiFrameWnd::OnSelectChanged(TNotifyUI& msg)
 	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：点击主窗口工具栏麦克风按钮处理方法
- * 参  数：[in] msg 通知消息
- * 返回值：无
- ------------------------------------------------------------------------------*/
+
 void CDuiFrameWnd::OnClickMicBtn(TNotifyUI& msg)
 {
 	DWORD dwMicIndex = CSdkManager::GetInstance().GetOpenMic();
@@ -279,45 +152,16 @@ void CDuiFrameWnd::OnClickMicBtn(TNotifyUI& msg)
 		m_bBroadcastMic = true;
 	}
 
-	RefreshMicBtnBkImg();
+	SetToolbarMicBtnStatus(m_bBroadcastMic);
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：点击主窗口工具栏播放音频按钮处理方法
- * 参  数：[in] msg 通知消息
- * 返回值：无
- ------------------------------------------------------------------------------*/
-void CDuiFrameWnd::OnClickAudBtn(TNotifyUI& msg)
-{
-	if (m_bPlayAudio)
-	{
-		CSdkManager::GetInstance().GetFspEngin()->StopPlayAudio();
-		m_bPlayAudio = false;
-	}
-	else
-	{
-		CSdkManager::GetInstance().GetFspEngin()->StartPlayAudio();
-		m_bPlayAudio = true;
-	}
 
-	RefreshAudBtnBkImg();
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：摄像头是否已经被广播了
- * 参  数：[in] dwCamIndex 摄像头索引
- * 返回值：是/否
- ------------------------------------------------------------------------------*/
 bool CDuiFrameWnd::IsCamOpened(DWORD dwCamIndex)
 {
 	return m_setCamOpenIndexes.end() != m_setCamOpenIndexes.find(dwCamIndex);
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：点击主界面工具栏摄像头按钮处理
- * 参  数：[in] msg 通知消息
- * 返回值：无
- ------------------------------------------------------------------------------*/
+
 void CDuiFrameWnd::OnClickCamBtn(TNotifyUI& msg)
 {
 	// 创建菜单
@@ -334,10 +178,10 @@ void CDuiFrameWnd::OnClickCamBtn(TNotifyUI& msg)
 	for (auto iter = vecCam.begin(); iter != vecCam.end(); ++iter)
 	{
 		WCHAR szMenuItemName[64];
-		swprintf(szMenuItemName, L"cam_menu_%d", dwMenuItemIndex);
+		swprintf_s(szMenuItemName, L"cam_menu_%d", dwMenuItemIndex);
 
 		WCHAR szOptionName[64];
-		swprintf(szOptionName, L"cam_%d", dwMenuItemIndex);
+		swprintf_s(szOptionName, L"cam_%d", dwMenuItemIndex);
 
 		WCHAR szCamName[128];
 		demo::ConvertUtf8ToUnicode(iter->device_name.c_str(), szCamName, 128);
@@ -363,101 +207,42 @@ void CDuiFrameWnd::OnClickCamBtn(TNotifyUI& msg)
 	pMenu->ShowMenu(point);
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：点击主界面工具栏设置按钮处理
- * 参  数：[in] msg 通知消息
- * 返回值：无
- ------------------------------------------------------------------------------*/
+
 void CDuiFrameWnd::OnClickSettingBtn(TNotifyUI& msg)
 {
-	CDuiSettingWnd wndSetting;
-	wndSetting.Create(m_hWnd, _T("CDuiSettingWnd"), UI_WNDSTYLE_DIALOG, WS_EX_WINDOWEDGE);
-	wndSetting.CenterWindow();
-	wndSetting.ShowModal();
+	m_pSettingWnd = new CDuiSettingWnd();
+	m_pSettingWnd->Create(m_hWnd, _T("CDuiSettingWnd"), UI_WNDSTYLE_DIALOG, WS_EX_WINDOWEDGE);
+	m_pSettingWnd->CenterWindow();
+	m_pSettingWnd->ShowModal();
+
+	//如果改变了共享区域，生效共享设置
+	if (m_isScreenSharing) {
+		ScreenShareConfig config = CSdkManager::GetInstance().GetScreenShareConfig();
+		CSdkManager::GetInstance().GetFspEngin()->StartPublishScreenShare(
+			config.left, config.top, config.right, config.bottom, config.qualityBias);
+	}
+
+	delete m_pSettingWnd;
+	m_pSettingWnd = nullptr;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：停止录制
- * 参  数：无
- * 返回值：无
- ------------------------------------------------------------------------------*/
-void CDuiFrameWnd::StopRecord()
+void CDuiFrameWnd::OnClickScreenShareBtn(TNotifyUI& msg)
 {
-	// 停止录制本端视频
-	fsp::IFspEngine* pEngin = CSdkManager::GetInstance().GetFspEngin();
-	auto vecCam = pEngin->GetDeviceManager()->GetCameraDevices();
-	for (auto iter = vecCam.begin(); iter != vecCam.end(); ++iter)
-	{
-		CSdkManager::GetInstance().StopRecordLocalVideo(iter->camera_id);
+	if (m_isScreenSharing) {
+		CSdkManager::GetInstance().GetFspEngin()->StopPublishScreenShare();
+		m_isScreenSharing = false;
+	}
+	else {
+		ScreenShareConfig config = CSdkManager::GetInstance().GetScreenShareConfig();
+		CSdkManager::GetInstance().GetFspEngin()->StartPublishScreenShare(
+			config.left, config.top, config.right, config.bottom, config.qualityBias);
+		m_isScreenSharing = true;
 	}
 
-	// 停止录制远端视频
-	for each (RemoteVideoInfo info in m_vecRemoteVideoInfo)
-	{
-		CSdkManager::GetInstance().StopRecordRemoteVideo(
-			info.strUserId.c_str(), info.strVideoId.c_str());
-	}
-
-	// 停止录制本端音频
-	CSdkManager::GetInstance().StopRecordLocalAudio();
-
-	// 停止录制远端音频
-	for each (RemoteAudioInfo info in m_vecRemoteAudioInfo)
-	{
-		CSdkManager::GetInstance().StopRecordRemoteAudio(info.strUserId.c_str());
-	}
+	SetToolbarScreenshareBtnStatus(m_isScreenSharing);
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：点击主界面工具栏录制按钮处理
- * 参  数：[in] msg 通知消息
- * 返回值：无
- ------------------------------------------------------------------------------*/
-void CDuiFrameWnd::OnClickRecordBtn(TNotifyUI& msg)
-{
-	if (m_bRecord)
-	{
-		StopRecord();
 
-		m_bRecord = false;
-	}
-	else
-	{
-		// 录制本地视频
-		fsp::IFspEngine* pEngin = CSdkManager::GetInstance().GetFspEngin();
-		auto vecCam = pEngin->GetDeviceManager()->GetCameraDevices();
-		for (auto iter = vecCam.begin(); iter != vecCam.end(); ++iter)
-		{
-			CSdkManager::GetInstance().StartRecordLocalVideo(iter->camera_id);
-		}
-
-		// 录制远端视频
-		for each (RemoteVideoInfo info in m_vecRemoteVideoInfo)
-		{
-			CSdkManager::GetInstance().StartRecordRemoteVideo(
-				info.strUserId.c_str(), info.strVideoId.c_str());
-		}
-
-		// 录制本地音频
-		CSdkManager::GetInstance().StartRecordLocalAudio();
-
-		// 录制远端音频
-		for each (RemoteAudioInfo info in m_vecRemoteAudioInfo)
-		{
-			CSdkManager::GetInstance().StartRecordRemoteAudio(info.strUserId.c_str());
-		}
-
-		m_bRecord = true;
-	}
-
-	RefreshRecordBtnBkImg();
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：消息映射处理函数
- * 参  数：[in] msg 通知消息
- * 返回值：无
- ------------------------------------------------------------------------------*/
 void CDuiFrameWnd::OnClick(TNotifyUI& msg)
 {
 	if (msg.pSender->GetName() == L"btn_mic")
@@ -468,17 +253,12 @@ void CDuiFrameWnd::OnClick(TNotifyUI& msg)
 	{
 		OnClickCamBtn(msg);
 	}
-	else if (msg.pSender->GetName() == L"btn_aud")
-	{
-		OnClickAudBtn(msg);
+	else if (msg.pSender->GetName() == L"btn_screenshare") {
+		OnClickScreenShareBtn(msg);
 	}
 	else if (msg.pSender->GetName() == L"btn_setting")
 	{
 		OnClickSettingBtn(msg);
-	}
-	else if (msg.pSender->GetName() == L"btn_record")
-	{
-		OnClickRecordBtn(msg);
 	}
 	else
 	{
@@ -486,37 +266,7 @@ void CDuiFrameWnd::OnClick(TNotifyUI& msg)
 	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：虚拟函数，主界面退出时，程序需要退出
- * 参  数：[in] UINT
- *         [in] WPARAM
- *         [in] LPARAM
- *         [out] bHandled 消息是否已经被处理
- * 返回值：处理结果(LRESULT)
- ------------------------------------------------------------------------------*/
-LRESULT CDuiFrameWnd::OnDestroy(UINT, WPARAM, LPARAM, BOOL& bHandled)
-{
-	::SendMessage(GetHWND(), WM_QUIT, 0, 0);
-	return S_OK;
-}
 
-/*------------------------------------------------------------------------------
- * 描  述：虚拟函数，窗口退出之前的回调
- * 参  数：[in] hWnd 窗口句柄
- * 返回值：无
- ------------------------------------------------------------------------------*/
-void CDuiFrameWnd::OnFinalMessage(HWND hWnd)
-{
-	__super::OnFinalMessage(hWnd);
-	delete this;
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：SDK通知应用层有用户广播了音频的处理
- * 参  数：[in] wParam 携带RemoteAudioInfo结构体指针
- *         [in] lParam 没有使用
- * 返回值：无
- ------------------------------------------------------------------------------*/
 void CDuiFrameWnd::OnAddRemoteAudio(WPARAM wParam, LPARAM lParam)
 {
 	RemoteAudioInfo* pInfo = (RemoteAudioInfo*)wParam;
@@ -525,20 +275,10 @@ void CDuiFrameWnd::OnAddRemoteAudio(WPARAM wParam, LPARAM lParam)
 
 	m_vecRemoteAudioInfo.push_back(*pInfo);
 
-	if (m_bRecord) // 添加录制
-	{
-		CSdkManager::GetInstance().StartRecordRemoteAudio(pInfo->strUserId.c_str());
-	}
-
 	delete pInfo;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：SDK通知应用层有用户取消广播了音频的处理
- * 参  数：[in] wParam 携带RemoteAudioInfo结构体指针
- *         [in] lParam 没有使用
- * 返回值：无
- ------------------------------------------------------------------------------*/
+
 void CDuiFrameWnd::OnDelRemoteAudio(WPARAM wParam, LPARAM lParam)
 {
 	RemoteAudioInfo* pInfo = (RemoteAudioInfo*)wParam;
@@ -553,21 +293,11 @@ void CDuiFrameWnd::OnDelRemoteAudio(WPARAM wParam, LPARAM lParam)
 			break;
 		}
 	}
-
-	if (m_bRecord) // 停止录制
-	{
-		CSdkManager::GetInstance().StopRecordRemoteAudio(pInfo->strUserId.c_str());
-	}
-
+	
 	delete pInfo;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：SDK通知应用层有用户广播了视频的处理
- * 参  数：[in] wParam 携带RemoteVideoInfo结构体指针
- *         [in] lParam 没有使用
- * 返回值：无
- ------------------------------------------------------------------------------*/
+
 void CDuiFrameWnd::OnAddRemoteVideo(WPARAM wParam, LPARAM lParam)
 {
 	RemoteVideoInfo* pInfo = (RemoteVideoInfo*)wParam;
@@ -576,21 +306,10 @@ void CDuiFrameWnd::OnAddRemoteVideo(WPARAM wParam, LPARAM lParam)
 
 	m_vecRemoteVideoInfo.push_back(*pInfo);
 
-	if (m_bRecord) // 添加录制
-	{
-		CSdkManager::GetInstance().StartRecordRemoteVideo(
-			pInfo->strUserId.c_str(), pInfo->strVideoId.c_str());
-	}
-
 	delete pInfo;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：SDK通知应用层有用户取消广播了视频的处理
- * 参  数：[in] wParam 携带RemoteVideoInfo结构体指针
- *         [in] lParam 没有使用
- * 返回值：无
- ------------------------------------------------------------------------------*/
+
 void CDuiFrameWnd::OnDelRemoteVideo(WPARAM wParam, LPARAM lParam)
 {
 	RemoteVideoInfo* pInfo = (RemoteVideoInfo*)wParam;
@@ -605,22 +324,10 @@ void CDuiFrameWnd::OnDelRemoteVideo(WPARAM wParam, LPARAM lParam)
 			break;
 		}
 	}
-
-	if (m_bRecord) // 停止录制
-	{
-		CSdkManager::GetInstance().StopRecordRemoteVideo(
-			pInfo->strUserId.c_str(), pInfo->strVideoId.c_str());
-	}
-
 	delete pInfo;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：切换广播摄像头处理
- * 参  数：[in] wParam 切换之前的摄像头索引
- *         [in] lParam 切换之后的摄像头索引
- * 返回值：无
- ------------------------------------------------------------------------------*/
+
 void CDuiFrameWnd::OnBroadcastCamChanged(WPARAM wParam, LPARAM lParam)
 {
 	DWORD dwOldCamIndex = (DWORD)wParam;
@@ -637,11 +344,7 @@ void CDuiFrameWnd::OnBroadcastCamChanged(WPARAM wParam, LPARAM lParam)
 	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：获取主窗口中间部门显示区域
- * 参  数：无
- * 返回值：矩形区域
- ------------------------------------------------------------------------------*/
+
 RECT CDuiFrameWnd::GetDisplayRect()
 {
 	RECT rect;
@@ -652,11 +355,7 @@ RECT CDuiFrameWnd::GetDisplayRect()
 	return rect;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：主窗口大小变化，调整Group ID和User ID显示位置
- * 参  数：无
- * 返回值：无
- ------------------------------------------------------------------------------*/
+
 void CDuiFrameWnd::AdjustTitleGroupUser()
 {
 	RECT rcClient = GetDisplayRect();
@@ -670,65 +369,70 @@ void CDuiFrameWnd::AdjustTitleGroupUser()
 	(m_PaintManager.FindControl(L"group_user"))->SetPadding(rectPadding);
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：主窗口大小变化，调整Toolbar按钮的显示位置
- * 参  数：无
- * 返回值：无
- ------------------------------------------------------------------------------*/
-void CDuiFrameWnd::AdjustToolbarBtn()
-{
-	RECT rcClient = GetDisplayRect();
 
-	RECT rectPadding;
-	ZeroMemory(&rectPadding, sizeof(rectPadding));
-
-	// 魔鬼数字参考duilib的布局文件“main.xml”
-	rectPadding.left	= (rcClient.right - rcClient.left - 460) / 2;
-	rectPadding.top		= 15;
-	rectPadding.right	= 20;
-	rectPadding.bottom	= 15;
-
-	(m_PaintManager.FindControl(L"btn_mic"))->SetPadding(rectPadding);
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：定时器回调处理，包含刷新标题栏的上传下载速率
- * 参  数：无
- * 返回值：无
- ------------------------------------------------------------------------------*/
 void CDuiFrameWnd::OnTimer()
 {
-	static int count = 0; // 用来计时1秒
-
-	if (++count >= 5) // Timer间隔是200ms，这里设置每秒刷新上传下载速率
-	{
-		StreamStats stats = CSdkManager::GetInstance().GetFspEngin()->GetStreamStats(true);
-
-		WCHAR szCaption[256];
-		ZeroMemory(szCaption, sizeof(szCaption));
-
-		_snwprintf(szCaption, 256, L"Group ID：%s    User ID：%s    Up：%d kbps    Down：%d kbps",
-			CSdkManager::GetInstance().GetLoginGroup().GetData(),
-			CSdkManager::GetInstance().GetLoginUser().GetData(),
-			stats.send_data_size * 8 / 1024, stats.recv_data_size * 8 / 1024);
-
-		CLabelUI* pCapLabel = (CLabelUI*)m_PaintManager.FindControl(L"group_user");
-		pCapLabel->SetText(szCaption);
-
-		count = 0;
-	}
-	
 	m_VideoWndMgr.OnTimer(); // 界面线程刷新音视频状态信息
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：SDK通知应用层有用户广播了视频的处理
- * 参  数：[in] uMsg		消息类型
- *         [in] wParam		自定义
- *         [in] lParam		自定义
- *         [out] bHandled	消息是否已经被处理
- * 返回值：处理结果
- ------------------------------------------------------------------------------*/
+void CDuiFrameWnd::SetToolbarCamBtnStatus(bool isOpen)
+{
+	CControlUI* pBtnAud = m_PaintManager.FindControl(L"btn_cam");
+	if (isOpen)
+	{
+		pBtnAud->SetAttribute(L"normalimage", L"img\\video\\toolbar_cam_open.png");
+		pBtnAud->SetAttribute(L"hotimage", L"img\\video\\toolbar_cam_open_hot.png");
+		pBtnAud->SetAttribute(L"pushedimage", L"img\\video\\toolbar_cam_open_pressed.png");
+	}
+	else
+	{
+		pBtnAud->SetAttribute(L"normalimage", L"img\\video\\toolbar_cam.png");
+		pBtnAud->SetAttribute(L"hotimage", L"img\\video\\toolbar_cam_hot.png");
+		pBtnAud->SetAttribute(L"pushedimage", L"img\\video\\toolbar_cam_pressed.png");
+	}
+}
+
+void CDuiFrameWnd::SetToolbarMicBtnStatus(bool isOpen)
+{
+	CControlUI* pBtnMic = m_PaintManager.FindControl(L"btn_mic");
+	if (isOpen)
+	{
+		pBtnMic->SetAttribute(L"normalimage", L"img\\video\\toolbar_mic_open.png");
+		pBtnMic->SetAttribute(L"hotimage", L"img\\video\\toolbar_mic_open_hot.png");
+		pBtnMic->SetAttribute(L"pushedimage", L"img\\video\\toolbar_mic_open_pressed.png");
+	}
+	else
+	{
+		pBtnMic->SetAttribute(L"normalimage", L"img\\video\\toolbar_mic.png");
+		pBtnMic->SetAttribute(L"hotimage", L"img\\video\\toolbar_mic_hot.png");
+		pBtnMic->SetAttribute(L"pushedimage", L"img\\video\\toolbar_mic_pressed.png");
+	}
+}
+
+void CDuiFrameWnd::SetToolbarScreenshareBtnStatus(bool isOpen)
+{
+	CControlUI* pBtnMic = m_PaintManager.FindControl(L"btn_screenshare");
+	if (isOpen)
+	{
+		pBtnMic->SetAttribute(L"normalimage", L"img\\video\\toolbar_share_open.png");
+		pBtnMic->SetAttribute(L"hotimage", L"img\\video\\toolbar_share_open_hot.png");
+		pBtnMic->SetAttribute(L"pushedimage", L"img\\video\\toolbar_share_open_pressed.png");
+	}
+	else
+	{
+		pBtnMic->SetAttribute(L"normalimage", L"img\\video\\toolbar_share.png");
+		pBtnMic->SetAttribute(L"hotimage", L"img\\video\\toolbar_share_hot.png");
+		pBtnMic->SetAttribute(L"pushedimage", L"img\\video\\toolbar_share_pressed.png");
+	}
+}
+
+LRESULT CDuiFrameWnd::OnDestroy(UINT, WPARAM, LPARAM, BOOL& bHandled)
+{
+	PostQuitMessage(0);
+	return 0;
+}
+
+
 LRESULT CDuiFrameWnd::HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	if (!m_bVideoWndInitFlag)
@@ -736,13 +440,24 @@ LRESULT CDuiFrameWnd::HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lPara
 
 	switch (uMsg)
 	{
+	case WM_SHOWWINDOW:
+	{
+		WCHAR szCaption[128];
+		_snwprintf_s(szCaption, 64, L"Group ID：%s    User ID：%s",
+			CSdkManager::GetInstance().GetLoginGroup().GetData(),
+			CSdkManager::GetInstance().GetLoginUser().GetData());
+
+		CLabelUI* pCapLabel = (CLabelUI*)m_PaintManager.FindControl(L"group_user");
+		pCapLabel->SetText(szCaption);
+		::SetWindowText(GetHWND(), szCaption);
+		break;
+	}
 	case WM_TIMER:
 		OnTimer();
 		break;
 
 	case WM_SIZE:
 		m_VideoWndMgr.SetWndRect(GetDisplayRect());
-		AdjustToolbarBtn();
 		AdjustTitleGroupUser();
 		break;
 
@@ -790,6 +505,56 @@ LRESULT CDuiFrameWnd::HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lPara
 		m_VideoWndMgr.OnVideoParamChanged();
 		break;
 
+	case DUILIB_MSG_REMOTECONTROL_EVENT: {
+		RemoteControlInfo* pInfo = (RemoteControlInfo*)wParam;
+	
+		WCHAR wszRemoteUserId[128] = { 0 };
+		demo::ConvertUtf8ToUnicode(pInfo->strUserId.c_str(),
+			wszRemoteUserId, 128);
+
+		if (pInfo->operationType == fsp::REMOTE_CONTROL_REQUEST) {
+			CMessageBox* pMB = new CMessageBox;
+			CDuiString strTip;
+			strTip.Format(L"%s 请求远程控制", wszRemoteUserId);
+			pMB->Create(GetHWND(), _T("CDuiLoginWnd"), UI_WNDSTYLE_FRAME, WS_EX_WINDOWEDGE);
+			pMB->SetText(strTip);
+			pMB->SetBtnText(L"拒绝", L"接受");
+			pMB->CenterWindow();
+			if (IDOK == pMB->ShowModal()) {
+				CSdkManager::GetInstance().GetFspEngin()->RemoteControlOperation(
+					pInfo->strUserId, fsp::REMOTE_CONTROL_ACCEPT);
+			}
+			else {
+				CSdkManager::GetInstance().GetFspEngin()->RemoteControlOperation(
+					pInfo->strUserId, fsp::REMOTE_CONTROL_REJECT);
+			}
+		}
+		else if (pInfo->operationType == fsp::REMOTE_CONTROL_CANCEL) {
+			CDuiString strTip;
+			strTip.Format(L"%s 取消了远程控制", wszRemoteUserId);
+			demo::ShowMessageBox(GetHWND(), strTip);
+		}
+		else if (pInfo->operationType == fsp::REMOTE_CONTROL_ACCEPT) {
+			CDuiString strTip;
+			strTip.Format(L"%s 接受了远程控制", wszRemoteUserId);
+			demo::ShowMessageBox(GetHWND(), strTip);
+		}
+		else if (pInfo->operationType == fsp::REMOTE_CONTROL_REJECT) {
+			CDuiString strTip;
+			strTip.Format(L"%s 拒绝了远程控制", wszRemoteUserId);
+			demo::ShowMessageBox(GetHWND(), strTip);
+		}
+
+		m_VideoWndMgr.OnRemoteControlOperation(pInfo->strUserId, pInfo->operationType);
+		
+		delete pInfo;
+	}
+	case DUILIB_MSG_DEVICECHANGE:
+	{
+		if (m_pSettingWnd) {
+			m_pSettingWnd->OnDeviceChanged();
+		}
+	}
 	default:
 		break;
 	}

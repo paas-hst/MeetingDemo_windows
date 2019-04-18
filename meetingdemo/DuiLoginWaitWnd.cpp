@@ -26,6 +26,7 @@ CDuiLoginWaitWnd::CDuiLoginWaitWnd()
 ------------------------------------------------------------------------------*/
 CDuiLoginWaitWnd::~CDuiLoginWaitWnd()
 {
+
 }
 
 /*------------------------------------------------------------------------------
@@ -59,18 +60,13 @@ LPCTSTR CDuiLoginWaitWnd::GetWindowClassName(void) const
 }
 
 /*------------------------------------------------------------------------------
- * 描  述：SDK回调的登录结果要通过消息的方式发到等待窗口(UI线程处理)
- * 参  数：略
- * 返回值：LRESULT
+ * 描  述：主要用来设置应用程序图标
+ * 参  数：无
+ * 返回值：无
  ------------------------------------------------------------------------------*/
-LRESULT CDuiLoginWaitWnd::HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
+void CDuiLoginWaitWnd::InitWindow()
 {
-	if (uMsg == DUILIB_MSG_LOGIN_RESULT)
-	{
-		CSdkManager::GetInstance().OnLoginResult((fsp::ErrCode)wParam);
-	}
-
-	return 0;
+	SetIcon(IDI_FSPCLIENT);
 }
 
 /*------------------------------------------------------------------------------
@@ -80,27 +76,6 @@ LRESULT CDuiLoginWaitWnd::HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM l
  ------------------------------------------------------------------------------*/
 LRESULT CDuiLoginWaitWnd::OnDestroy(UINT, WPARAM, LPARAM, BOOL& bHandled)
 {
-	::SendMessage(GetHWND(), WM_QUIT, 0, 0);
+	PostQuitMessage(0);
 	return 0;
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：窗口销毁前需要删除自身
- * 参  数：[in] hWnd 窗口句柄
- * 返回值：无
- ------------------------------------------------------------------------------*/
-void CDuiLoginWaitWnd::OnFinalMessage(HWND hWnd)
-{
-	__super::OnFinalMessage(hWnd);
-	delete this;
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：主要用来设置应用程序图标
- * 参  数：无
- * 返回值：无
- ------------------------------------------------------------------------------*/
-void CDuiLoginWaitWnd::InitWindow()
-{
-	SetIcon(IDI_FSPCLIENT);
 }

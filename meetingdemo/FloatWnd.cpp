@@ -119,4 +119,3 @@ void CFloatWnd::SetWndRect(const RECT& rectWnd)
 	::ShowWindow(m_hWnd, SW_SHOW);
 }
 
-

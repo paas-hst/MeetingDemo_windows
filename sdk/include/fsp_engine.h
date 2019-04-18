@@ -17,6 +17,8 @@ static const int AUDIOPARAM_VALUE_ENABLE = 1;  ///<某个音频参数开启
 static const int AUDIOPARAM_VALUE_DISABLE = 0; ///<某个音频参数关闭
 
 
+//官方保留的videoid, 代表特定类型的广播，广播时不能取这些值。
+static const char* RESERVED_VIDEOID_SCREENSHARE = "reserved_videoid_screenshare";
 
 /**
  * @brief 错误码集合
@@ -25,7 +27,7 @@ enum ErrCode {
   ERR_OK = 0, ///<成功
 
   ERR_INVALID_ARG = 1,      ///<非法参数
-  ERR_NOT_INITED = 2,       ///<未初始化
+  ERR_INVALID_STATE = 2,    ///<非法状态
   ERR_OUTOF_MEMORY = 3,     ///<内存不足
   ERR_DEVICE_FAIL = 4,      ///<访问设备失败
 
@@ -65,7 +67,9 @@ enum AudioParamKey {
  * @brief IFspEngineEventHandler.OnEvent回调的事件类型
  */
 enum EventType {
-  EVENT_JOINGROUP_RESULT = 0 ///<加入组结果
+  EVENT_JOINGROUP_RESULT = 0, ///<加入组结果
+  EVENT_CONNECT_LOST = 1,     ///<与fsp服务的连接断开，应用层需要去重新加入组
+  EVENT_RECONNECT_START = 2   ///<网络断开过，开始重连
 };
 
 /**
@@ -88,12 +92,6 @@ enum RemoteAudioEventType {
   REMTOE_AUDIO_EVENT_PUBLISHE_STOPED = 1   ///<远端停止广播音频
 };
 
-enum ScreenShareEventType
-{
-	SCREEN_SHARE_EVENT_PUBLISHED = 0,		 ///<远端开启了屏幕共享
-	SCREEN_SHARE_EVENT_PUBLISH_STOPED = 1	 ///<远端停止了屏幕共享
-};
-
 /**
  * @brief 视频显示缩放模式
  */
@@ -112,36 +110,15 @@ enum RemoteVideoEventType {
   REMOTE_VIDEO_EVENT_FIRST_RENDERED = 2 ///<远端视频第一次显示,加载完成的事件
 };
 
-/**
- * @brief 远端视频操作类型
- */
-enum RemtoeVideoOperate {
-  REMOTE_VIDEO_OPEN = 0, ///<打开远端视频
-  REMOTE_VIDEO_CLOSE = 1 ///<关闭远端视频
-};
-
-/**
- * @brief 回调数据类型
- */
-enum CallbackDataType
-{
-	CALLBACK_DATA_LOCAL_AUDIO_RAW = 0,		///<本地麦克风PCM数据
-	CALLBACK_DATA_REMOTE_AUDIO_RAW = 1,		///<远端广播麦克风PCM数据
-	CALLBACK_DATA_LOCAL_AUDIO_MIXED_RAW = 2,///<本端麦克风和所有远端广播麦克风合成的PCM数据
-	CALLBACK_DATA_LOCAL_VIDEO_RAW = 3,		///<本地摄像头裸流数据
-	CALLBACK_DATA_REMOTE_VIDEO_RAW = 4		///<远端广播摄像头裸流数据
-};
 
 //前置声明
 class IFspEngineEventHandler;
-class IFspEngineDataHandler;
 
 /**
  * @brief sdk初始化时需要的信息
  */
 struct FspEngineContext {
   IFspEngineEventHandler *event_handler; ///<外部实现的事件回调对象
-  IFspEngineDataHandler *data_handler;	///<外部实现的数据回调对象
   String app_id;						///< appid 由fsp平台分配的应用id
   String log_path;						///<日志目录，如果不填，默认程序所在目录
   String server_addr;					///<服务地址，ip或域名加端口， 格式： "127.0.0.1:50002"，
@@ -151,7 +128,6 @@ struct FspEngineContext {
 
   FspEngineContext() 
 	  : event_handler(NULL)
-	  , data_handler(NULL)
 	  , app_id("")
 	  , log_path("./")
 	  , server_addr("")
@@ -213,91 +189,23 @@ struct VideoProfile
 };
 
 /**
- * @brief 回调数据描述
- *
- * 回调不同的数据（设置StreamDataType）需要填充不同的附加字段，填充规则如下：
- * CALLBACK_DATA_LOCAL_AUDIO_RAW: 无需填充其他附加字段 		
- * CALLBACK_DATA_REMOTE_AUDIO_RAW: 需要填充user_id字段
- * CALLBACK_DATA_LOCAL_AUDIO_MIXED_RAW: 无需填充其他字段
- * CALLBACK_DATA_LOCAL_VIDEO_RAW: 需要填充camera_id字段
- * CALLBACK_DATA_REMOTE_VIDEO_RAW: 需要填充user_id和video_id字段
+ * @brief 屏幕共享质量偏好设置
  */
-struct CallbackDataDesc
+enum ScreenShareQualityBias
 {
-	CallbackDataType data_type;
-	String user_id;
-	String video_id;
-	int camera_id;
+	SCREEN_SHARE_BIAS_QUALITY = 0, ///<偏重画面质量，适合共享文档等静态桌面
+	SCREEN_SHARE_BIAS_SPEED = 1    ///<偏重帧率速度，适合视频等动态桌面
 };
 
 /**
- * @brief 视频头信息，描述回调视频的属性信息
+ * 远程控制操作
  */
-struct BitmapInfoHeader {
-	DWORD      biSize;				///<结构体大小
-	LONG       biWidth;				///<图片宽度
-	LONG       biHeight;			///<图片高度
-	WORD       biPlanes;			///<目标绘图设备层数
-	WORD       biBitCount;			///<色深
-	DWORD      biCompression;		///<压缩方式
-	DWORD      biSizeImage;			///<图像大小
-	LONG       biXPelsPerMeter;		///<水平分辨率
-	LONG       biYPelsPerMeter;		///<垂直分辨率
-	DWORD      biClrUsed;			///<图像使用的颜色
-	DWORD      biClrImportant;		///<重要的颜色数
-};
-
-/**
- * @brief 流统计数据，单位是Byte
- */
-struct StreamStats {
-	int recv_data_size;	///<接收数据大小
-	int send_data_size;	///<发送数据大小
-};
-
-/*
- * @brief 发起共享的参数信息
- */
-struct ScreenShareHostConfig{
-	bool enable_telecontrol;	///<是否允许远程控制
-	bool remove_wallpaper;		///<是否移除壁纸
-	int  quality_bias;			///<0 为偏重清晰度（文档模式)， 1 为偏重帧率（视频模式）
-	RECT rect_share;			///<所共享的区域大小，share_mode为3时必填
-
-	ScreenShareHostConfig()
-	{
-		rect_share.left = 0;
-		rect_share.top = 0;
-		rect_share.right = 0;
-		rect_share.bottom = 0;
-		enable_telecontrol = false;
-		remove_wallpaper = false;
-		quality_bias = false;
-	}
-};
-
-struct ScreenShareViewConfig {
-	HWND		wnd_parent;			 ///<父窗体的句柄
-	bool		enable_telecontrol;	 ///<是否允许远程控制
-	RECT		rect_share;			///<接收屏幕共享数据时渲染的区域
-
-	ScreenShareViewConfig()
-	{
-		wnd_parent = NULL;
-		rect_share.left = 0;
-		rect_share.top = 0;
-		rect_share.right = 0;
-		rect_share.bottom = 0;
-		enable_telecontrol = false;
-	}
-};
-
-enum ScreenShareRemoteControlEventType
+enum RemoteControlOperationType
 {
-	EVENT_APPLY_REMOTE_CONTROL = 0,   ///<请求远程控制
-	EVENT_CANCEL_REMOTE_CONTROL = 1,  ///<取消远程控制
-	EVENT_ACCEPT_REMOTE_CONTROL = 2,  ///<同意远程控制
-	EVENT_REFUSE_REMOTE_CONTROL = 3   ///<拒绝远程控制
+	REMOTE_CONTROL_REQUEST = 0, ///<查看端请求远程控制桌面
+	REMOTE_CONTROL_CANCEL = 1,  ///<查看端取消远程控制桌面
+	REMOTE_CONTROL_ACCEPT = 2,  ///<广播端同意远程控制请求
+	REMOTE_CONTROL_REJECT = 3   ///<广播端拒绝远程控制请求
 };
 
 /**
@@ -348,10 +256,6 @@ public:
    */
   virtual int GetAudioParam(AudioParamKey param_key) = 0;
 
-  /**
-   * @brief 开始扬声器回声延迟检测
-   */
-  virtual void StartAecDelayDetect() = 0;
 
   /**
    * @brief 设置当前扬声器设备
@@ -412,71 +316,17 @@ public:
    */
   virtual void OnRemoteAudioEvent(const String &user_id,
                                   RemoteAudioEventType remote_audio_event) = 0;
-
-  /**
-  * @brief 屏幕共享的事件
-  * @param user_id 远端屏幕共享所属的user id
-  * @param screen_share_event 参见ScreenShareEventType枚举注释
-  */
-  virtual void OnScreenShareEvent(const String &user_id, ScreenShareEventType screen_share_event) = 0;
-
+  
   /**
   * @brief 屏幕共享远程控制的通知事件
-  * @param user_id 远程控制操作的用户id
-  * @param event_type 参见ScreenShareRemoteControlEventType枚举注释
+  * @param user_id 对方userid
+  * @param operation_type 参见RemoteControlOperation枚举注释
   */
-  virtual void OnScreenShareRemoteControlEvent(const String& user_id, 
-	  const String& src_user_name, ScreenShareRemoteControlEventType event_type) = 0;
+  virtual void OnRemoteControlOperationEvent(const String& user_id,
+	  RemoteControlOperationType operation_type) = 0;
 
 };
 
-/**
- * @brief 音视频数据回调，应用层继承此接口并实现
- * 当前音频格式固定：采样率16K，采样位深16bit，单声道
- */
-class IFspEngineDataHandler {
-public:
-	/**
-	 * @brief 本地音频数据回调（麦克风）
-	 * @param data 数据指针
-	 * @param data_len 数据长度
-	 */
-	virtual void OnLocalAudioStreamRawData(const char* data, int data_len) = 0;
-
-	/**
-	 * @brief 远端音频数据回调
-	 * @param user_id 远端用户标识
-	 * @param data 数据指针
-	 * @param data_len 数据长度
-	 */
-	virtual void OnRemoteAudioStreamRawData(const String& user_id, const char* data, int data_len) = 0;
-
-	/**
-	 * @brief 混音数据回调，包含本地和远端所有音频，采样率16K，采样位深16bit，单声道
-	 * @param data 数据指针
-	 * @param data_len 数据长度
-	 */
-	virtual void OnMixAudioStreamRawData(const char* data, int data_len) = 0;
-
-	/**
-	 * @brief 本地视频数据回调
-	 * @param camera_id 本地摄像头标识
-	 * @param header 视频头信息
-	 * @param data 数据指针
-	 * @param data_len 数据长度
-	 */
-	virtual void OnLocalVideoStreamRawData(int camera_id, BitmapInfoHeader* header, const char* data, int data_len) = 0;
-
-	/**
-	 * @brief 远端视频数据回调
-	 * @param user_id 远端用户标识
-	 * @param video_id 远端视频标识
-	 * @param header 视频头信息
-	 * @param data 数据指针
-	 * @param data_len 数据长度
-	 */
-	virtual void OnRemoteVideoStreamRawData(const String& user_id, const String& video_id, BitmapInfoHeader* header, const char* data, int data_len) = 0;
-};
 
 /**
  * @brief sdk对外核心接口
@@ -489,6 +339,12 @@ public:
    * @return 结果错误码
    */
   virtual ErrCode Init(const FspEngineContext &context) = 0;
+
+  /**
+   * sdk版本信息
+   * @return 版本字符串
+   */
+  virtual String GetVersion() = 0;
 
   /**
    * @brief 加入组
@@ -510,9 +366,10 @@ public:
    * @brief 本地视频增加预览渲染
    * @param camera_id 哪个摄像头
    * @param render_wnd 渲染窗口, 标识一个渲染
+   * @param mode 拉伸模式
    * @return 结果错误码
    */
-  virtual ErrCode AddVideoPreview(int camera_id, HWND render_wnd) = 0;
+  virtual ErrCode AddVideoPreview(int camera_id, HWND render_wnd, RenderMode mode) = 0;
 
   /**
    * @brief 本地视频删除预览渲染
@@ -543,6 +400,28 @@ public:
   * @param profile profile参数
   */
   virtual ErrCode SetVideoProfile(const String &video_id, const VideoProfile& profile) = 0;
+  
+  /**
+   * @brief 设置远端用户视频的渲染窗口
+   * @param user_id 哪个用户
+   * @param video_id 哪路视频的video id
+   * @param render_wnd 渲染窗口, 传NULL停止接收视频
+   * @param mode 拉伸模式
+   */
+  virtual ErrCode SetRemoteVideoRender(const String &user_id,
+	  const String &video_id,
+	  HWND render_wnd,
+	  RenderMode mode) = 0;
+
+  /**
+   * @brief 获取视频的统计数据, 一般定时调用获取。 支持获取远端和本端的统计，
+   * 根据user_id区分
+   * @param user_id 用户id, 如果是本端userid， 获取的是本地广播出去视频的统计
+   * @param video_id 对应的videoid
+   * @param [out] stats 用户输出的VideoStatsInfo对象指针
+   */
+  virtual ErrCode GetVideoStats(const String &user_id, const String &video_id,
+	  VideoStatsInfo *stats) = 0;
 
   /**
    * @brief 开始广播音频
@@ -570,28 +449,7 @@ public:
    * @return 能量值 0 - 100
    */
   virtual int GetRemoteAudioEnergy(const String &user_id) = 0;
-
-  /**
-   * @brief 操作远程视频
-   * @param user_id 远端用户id
-   * @param video_id 远端的video id
-   * @param operation 操作动作类型
-   */
-  virtual ErrCode HandleRemoteVideo(const String &user_id,
-                                    const String &video_id,
-                                    RemtoeVideoOperate operation) = 0;
-
-  /**
-   * @brief 获取视频的统计数据, 一般定时调用获取。 支持获取远端和本端的统计，
-   * 根据user_id区分
-   * @param user_id 用户id, 如果是本端userid， 获取的是本地广播出去视频的统计
-   * @param video_id 对应的videoid
-   * @param [out] stats 用户输出的VideoStatsInfo对象指针
-   */
-  virtual ErrCode GetVideoStats(const String &user_id, const String &video_id,
-                                VideoStatsInfo *stats) = 0;
   
-
   /**
    * @brief 开关远端音频
    * @param user_id 远端用户id
@@ -599,37 +457,7 @@ public:
    */
   virtual ErrCode MuteRemoteAudio(const String &user_id, bool is_mute) = 0;
 
-  /**
-   * @brief 设置远端用户视频的渲染窗口
-   * @param user_id 哪个用户
-   * @param video_id 哪路视频的video id
-   * @param render_wnd 渲染窗口, 标识一个渲染
-   */
-  virtual ErrCode SetRemoteVideoRender(const String &user_id,
-                                       const String &video_id,
-                                       HWND render_wnd) = 0;
-
-  /**
-   * @breif 设置视频渲染的拉伸模式
-   * @param redner_wnd 渲染窗口标识的渲染
-   * @param mode 拉伸模式
-   */
-  virtual ErrCode SetRenderMode(HWND render_wnd, RenderMode mode) = 0;
-
-  /**
-   * @breif 设置数据回调状态
-   * @param desc 回调数据描述，具体见CallbackDataDesc描述
-   * @param state true表示开启，false表示关闭
-   */
-  virtual ErrCode SetCallbackDataState(CallbackDataDesc desc, bool state) = 0;
-
-  /**
-   * @brief 获取流统计数据
-   * @param reset true: 返回统计数据后数据清零; false: 返回统计数据后，数据不清零，继续累加
-   * @return 统计数据
-   */
-  virtual StreamStats GetStreamStats(bool reset) = 0;
-
+  
   /**
    * @brief 获取engine 的IDeviceManager
    * @return IDeviceManager 对象指针
@@ -643,25 +471,16 @@ public:
   virtual IAudioEngine *GetAudioEngine() = 0;
 
   /**
-  * @brief 开始共享
-  * @param screen_share_config 共享的参数，参数信息参考数据结构ScreenShareHostConfig
+  * @brief 开始屏幕共享, 如果已经在屏幕共享，可以继续调用更新共享参数
+  * @param left 共享区域的左边x坐标
+  * @param top 共享区域的顶边y坐标
+  * @param right 共享区域的右边x坐标
+  * @param bottom 共享区域的底边y坐标,
+  * @param quality_bias 共享的质量偏好模式
+  * @note 如果四个坐标值全0， 共享整个桌面
   * @return 结果错误码
   */
-  virtual ErrCode StartPublishScreenShare(const ScreenShareHostConfig& screen_share_config) = 0;
-
-  /**
-  * @brief 设置共享的参数，发起方调用
-  * @param screen_share_config 共享的参数，参数信息参考数据结构ScreenShareHostConfig
-  * @return 结果错误码
-  */
-  virtual ErrCode SetScreenShareHostConfig(const ScreenShareHostConfig& screen_share_config) = 0;
-
-  /**
-  * @brief 获取共享的参数，发起方调用
-  * @param screen_share_config 共享的参数，参数信息参考数据结构ScreenShareHostConfig
-  * @return 结果错误码
-  */
-  virtual ErrCode GetScreenShareHostConfig(ScreenShareHostConfig& screen_share_config) = 0;
+  virtual ErrCode StartPublishScreenShare(int left, int top, int right, int bottom, ScreenShareQualityBias quality_bias) = 0;
 
   /**
   * @brief  停止共享
@@ -670,53 +489,25 @@ public:
   virtual ErrCode StopPublishScreenShare() = 0;
 
   /**
-  * @brief 接收共享数据
-  * @param user_id 被接收方的user id
-  * @param screen_share_config 共享的参数，参数信息参考数据结构ScreenShareViewConfig
-  * @return 结果错误码
-  */
-  virtual ErrCode StartReceiveScreenShare(const String& user_id, HWND render_wnd,
-										const ScreenShareViewConfig& screen_share_config) = 0;
+   * @brief 开始本地录制
+   * @param file_path 录制文件的全路径,包含文件后缀.mp4，比如d:/yourname.mp4
+   * @param is_record_audio 是否录制音频
+   * @param 结果错误码
+   */
+  virtual ErrCode StartRecord(const String& file_path, bool is_record_audio) = 0;
 
   /**
-  * @brief 设置共享的参数，接收方调用
-  * @param user_id 需要设置参数的用户id
-  * @param screen_share_config 共享的参数，参数信息参考数据结构ScreenShareViewConfig
-  * @return 结果错误码
-  */
-  virtual ErrCode SetScreenShareViewConfig(const String& user_id, const ScreenShareViewConfig& screen_share_config) = 0;
-
-  /**
-  * @brief 获取共享的参数，接收方调用
-  * @param user_id 需要获取参数的用户id
-  * @param screen_share_config 共享的参数，参数信息参考数据结构ScreenShareViewConfig
-  * @return 结果错误码
-  */
-  virtual ErrCode GetScreenShareViewConfig(const String& user_id, ScreenShareViewConfig& screen_share_config) = 0;
-
-  /**
-  * @brief  停止接收共享
-  * @user_id被停止接收的用户的id
-  * @return 结果错误码
-  */
-  virtual ErrCode StopReceiveScreenShare(const String &user_id) = 0;
+   * @brief 结束本地录制
+   */
+  virtual ErrCode StopRecord() = 0;
 
   /**
   * @brief  远程控制操作
-  * @param  user_id 申请发起方的user id
-  * @param  operation_type 事件类型，0 申请远程控制，1 取消远程控制， 2 同意，3 拒绝
+  * @param  user_id 对方userid
+  * @param  operation_type 操作类型
   * @return 结果错误码
   */
-  virtual ErrCode RemoteControlOperation(const String &user_id, ScreenShareRemoteControlEventType operation_type) = 0;
-
-  /**
-  * @brief  改变所接收的屏幕共享显示区域（显示区域大小变化时调用）
-  * @param  user_id 需要改变显示区域的用户id（即所接收的某个桌面共享者的用户id）
-  * @param  display_rect 新的显示区域
-  * @param  rsp_code 响应的信息，2 是同意，3是拒绝
-  * @return 结果错误码
-  */
-  virtual ErrCode ChangeScreenShareDisplayRect(const String& user_id, const RECT& display_rect) = 0;
+  virtual ErrCode RemoteControlOperation(const String &user_id, RemoteControlOperationType operation_type) = 0;
 
 };
 

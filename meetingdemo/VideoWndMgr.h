@@ -38,6 +38,9 @@ public:
 	void OnVideoParamChanged();
 	void OnTimer();
 
+	void OnRemoteControlOperation(const fsp::String& user_id, fsp::RemoteControlOperationType operationType);
+
+	void DelAllAV();
 private:
 	void CalCFloatWndRect(bool bShow);
 	bool IsMediaWndUsed(int nWndIndex);

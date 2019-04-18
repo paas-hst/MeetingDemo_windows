@@ -14,12 +14,15 @@
 using namespace DuiLib;
 
 class CSdkManager;
+class CDuiSettingWnd;
 
 class CDuiFrameWnd : public WindowImplBase 
 {
 public:
 	CDuiFrameWnd();
 	~CDuiFrameWnd();
+
+	void ResetWindowStatus();
 
 	DUI_DECLARE_MESSAGE_MAP()
 
@@ -28,28 +31,18 @@ private:
 	virtual CDuiString GetSkinFile() override;
 	virtual LPCTSTR GetWindowClassName(void) const override;
 	virtual void InitWindow() override;
-	virtual LRESULT OnDestroy(UINT, WPARAM, LPARAM, BOOL& bHandled) override;
-	virtual void OnFinalMessage(HWND hWnd) override;
-
 	void OnClick(TNotifyUI& msg);
 	void OnSelectChanged(TNotifyUI& msg);
 
 	void OnClickMicBtn(TNotifyUI& msg);
 	void OnClickCamBtn(TNotifyUI& msg);
-	void OnClickAudBtn(TNotifyUI& msg);
+	void OnClickScreenShareBtn(TNotifyUI& msg);
 	void OnClickSettingBtn(TNotifyUI& msg);
-	void OnClickRecordBtn(TNotifyUI& msg);
 
 	bool IsCamOpened(DWORD dwCamIndex);
 
-	void OnMicSelectChanged(TNotifyUI& msg);
 	void OnCamSelectChanged(TNotifyUI& msg);
-
-	void RefreshMicBtnBkImg();
-	void RefreshCamBtnBkImg();
-	void RefreshAudBtnBkImg();
-	void RefreshRecordBtnBkImg();
-
+	
 	void OnAddRemoteAudio(WPARAM wParam, LPARAM lParam);
 	void OnDelRemoteAudio(WPARAM wParam, LPARAM lParam);
 	void OnAddRemoteVideo(WPARAM wParam, LPARAM lParam);
@@ -59,20 +52,21 @@ private:
 
 	RECT GetDisplayRect();
 	void AdjustTitleGroupUser();
-	void AdjustToolbarBtn();
 
 	virtual LRESULT HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) override;
-
-	void StopRecord();
+	LRESULT OnDestroy(UINT, WPARAM, LPARAM, BOOL& bHandled) override;
 
 	void OnTimer();
+
+	void SetToolbarCamBtnStatus(bool isOpen);
+	void SetToolbarMicBtnStatus(bool isOpen);
+	void SetToolbarScreenshareBtnStatus(bool isOpen);
 
 private:
 	// 6个视频窗口管理器
 	CVideoWndMgr m_VideoWndMgr;
 
-	// TODO:视频最大化窗口
-	//CDisplayVideoWnd* m_pMaxVideoWnd;
+	CDuiSettingWnd* m_pSettingWnd = nullptr;
 
 	bool m_bVideoWndInitFlag;
 
@@ -80,9 +74,7 @@ private:
 	std::set<DWORD> m_setCamOpenIndexes;
 
 	bool m_bBroadcastMic;
-	bool m_bOpenSpeaker;
-	bool m_bPlayAudio;
-	bool m_bRecord;
+	bool m_isScreenSharing;
 
 	std::vector<RemoteAudioInfo> m_vecRemoteAudioInfo;
 	std::vector<RemoteVideoInfo> m_vecRemoteVideoInfo;

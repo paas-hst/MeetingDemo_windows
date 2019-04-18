@@ -35,6 +35,9 @@
 				</HorizontalLayout>
 				<HorizontalLayout />
 				<HorizontalLayout height="12" width="1000" padding="0, 0, 0, 8" >
+					<Label name="login_sdkver" font="2" text="" textcolor="0xFF545d75" align="center"/>
+				</HorizontalLayout>
+				<HorizontalLayout height="12" width="1000" padding="0, 0, 0, 8" >
 					<Label font="2" text="Copyright 2013-2018 hst.com. All Rights Reserved." textcolor="0xFF545d75" align="center"/>
 				</HorizontalLayout>
 				<HorizontalLayout height="12" width="1000" padding="0, 0, 0, 30" >

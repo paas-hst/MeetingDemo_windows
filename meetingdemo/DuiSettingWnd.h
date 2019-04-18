@@ -24,6 +24,9 @@ public:
 	virtual CDuiString GetSkinFolder() override;
 	virtual CDuiString GetSkinFile() override;
 	virtual LPCTSTR GetWindowClassName(void) const override;
+	virtual void Notify(TNotifyUI& msg)override;
+	
+	void OnDeviceChanged();
 
 	DUI_DECLARE_MESSAGE_MAP()
 
@@ -36,13 +39,19 @@ private:
 	void OnSelectAud(TNotifyUI& msg);
 	void OnSelectCam(TNotifyUI& msg);
 	void OnSelectRes(TNotifyUI& msg);
-	void OnSetWndFocus(TNotifyUI& msg);
+	void OnSelectedChange(TNotifyUI& msg);
+
+	void UpdateAudioTab();
+	void MoveVideoWnd();
+
+	void UpdateDeviceList();
 
 	virtual void InitWindow() override;
-	virtual LRESULT OnDestroy(UINT, WPARAM, LPARAM, BOOL& bHandled) override;
 	virtual LRESULT HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) override;
 private:
 	CFloatWnd* m_pVideoWnd;
+	CTabLayoutUI* m_pTabLayout = nullptr;
+
 	DWORD m_dwCurRenderCamId;
 };
 

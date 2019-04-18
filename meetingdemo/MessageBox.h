@@ -18,6 +18,7 @@ public:
 	~CMessageBox();
 
 	void SetText(LPCTSTR szText);
+	void SetBtnText(LPCTSTR szCancel, LPCTSTR szOk);
 
 	DUI_DECLARE_MESSAGE_MAP()
 

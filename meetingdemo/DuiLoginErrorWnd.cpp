@@ -19,8 +19,7 @@ DUI_END_MESSAGE_MAP()
  * 参  数：[in] result 登录结果
  * 返回值：无
 ------------------------------------------------------------------------------*/
-CDuiLoginErrorWnd::CDuiLoginErrorWnd(fsp::ErrCode result)
-	: m_eLoginResult(result)
+CDuiLoginErrorWnd::CDuiLoginErrorWnd()
 {
 }
 
@@ -31,6 +30,16 @@ CDuiLoginErrorWnd::CDuiLoginErrorWnd(fsp::ErrCode result)
 ------------------------------------------------------------------------------*/
 CDuiLoginErrorWnd::~CDuiLoginErrorWnd()
 {
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：更新错误信息
+ * 参  数：[in] strErrInfo 错误信息
+ * 返回值：无
+------------------------------------------------------------------------------*/
+void CDuiLoginErrorWnd::UpdateErrInfo(const CDuiString& strErrInfo)
+{
+	m_PaintManager.FindControl(L"error_info")->SetText(strErrInfo);
 }
 
 /*------------------------------------------------------------------------------
@@ -72,35 +81,12 @@ void CDuiLoginErrorWnd::OnClick(TNotifyUI& msg)
 {
 	if (msg.pSender->GetName() == L"relogin_btn")
 	{
-		CSdkManager::GetInstance().SetRestart();
-		Close();
+		CSdkManager::GetInstance().OpenLoginWnd();
 	}
 	else
 	{
 		WindowImplBase::OnClick(msg);
 	}
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：窗口销毁处理
- * 参  数：略
- * 返回值：LRESULT
- ------------------------------------------------------------------------------*/
-LRESULT CDuiLoginErrorWnd::OnDestroy(UINT, WPARAM, LPARAM, BOOL& bHandled)
-{
-	::SendMessage(GetHWND(), WM_QUIT, 0, 0);
-	return 0;
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：窗口销毁前，删除自身
- * 参  数：[in] hWnd 窗口句柄
- * 返回值：无
- ------------------------------------------------------------------------------*/
-void CDuiLoginErrorWnd::OnFinalMessage(HWND hWnd)
-{
-	__super::OnFinalMessage(hWnd);
-	delete this;
 }
 
 /*------------------------------------------------------------------------------
@@ -111,24 +97,15 @@ void CDuiLoginErrorWnd::OnFinalMessage(HWND hWnd)
 void CDuiLoginErrorWnd::InitWindow()
 {
 	SetIcon(IDI_FSPCLIENT);
+}
 
-	CDuiString strErrInfo = L"未知错误";
-	if (m_eLoginResult == ErrCode::ERR_TOKEN_INVALID)
-		strErrInfo = L"认证失败！";
-	else if (m_eLoginResult == ErrCode::ERR_CONNECT_FAIL)
-		strErrInfo = L"连接服务器失败！";
-	else if (m_eLoginResult == ErrCode::ERR_APP_NOT_EXIST)
-		strErrInfo = L"应用不存在！";
-	else if (m_eLoginResult == ErrCode::ERR_USERID_CONFLICT)
-		strErrInfo = L"用户已登录！";
-	else if (m_eLoginResult == ErrCode::ERR_NO_BALANCE)
-		strErrInfo = L"账户余额不足！";
-	else
-	{
-		WCHAR szTmp[8];
-		_snwprintf(szTmp, 8, L"%d", m_eLoginResult);
-		strErrInfo.Append(szTmp);
-	}
-		
-	m_PaintManager.FindControl(L"error_info")->SetText(strErrInfo);
+/*------------------------------------------------------------------------------
+ * 描  述：窗口销毁处理
+ * 参  数：略
+ * 返回值：LRESULT
+ ------------------------------------------------------------------------------*/
+LRESULT CDuiLoginErrorWnd::OnDestroy(UINT, WPARAM, LPARAM, BOOL& bHandled)
+{
+	PostQuitMessage(0);
+	return 0;
 }

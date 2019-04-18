@@ -11,8 +11,9 @@
 #include "SdkManager.h"
 #include "DuiAppConfigWnd.h"
 #include "util.h"
+#include <atlconv.h>
 
-// 消息映射
+ // 消息映射
 DUI_BEGIN_MESSAGE_MAP(CDuiLoginWnd, WindowImplBase)
 	DUI_ON_MSGTYPE(DUI_MSGTYPE_CLICK, OnClick)
 DUI_END_MESSAGE_MAP()
@@ -109,28 +110,6 @@ void CDuiLoginWnd::OnClick(TNotifyUI& msg)
 }
 
 /*------------------------------------------------------------------------------
- * 描  述：窗口销毁处理
- * 参  数：略
- * 返回值：LRESULT
- ------------------------------------------------------------------------------*/
-LRESULT CDuiLoginWnd::OnDestroy(UINT, WPARAM, LPARAM, BOOL& bHandled)
-{
-	::SendMessage(GetHWND(), WM_QUIT, 0, 0);
-	return 0;
-}
-
-/*------------------------------------------------------------------------------
- * 描  述：窗口销毁前，删除自身
- * 参  数：[in] hWnd 窗口句柄
- * 返回值：无
- ------------------------------------------------------------------------------*/
-void CDuiLoginWnd::OnFinalMessage(HWND hWnd)
-{
-	__super::OnFinalMessage(hWnd);
-	delete this;
-}
-
-/*------------------------------------------------------------------------------
  * 描  述：主要用来设置应用程序图标
  * 参  数：无
  * 返回值：无
@@ -138,4 +117,24 @@ void CDuiLoginWnd::OnFinalMessage(HWND hWnd)
 void CDuiLoginWnd::InitWindow()
 {
 	SetIcon(IDI_FSPCLIENT);
+
+	CLabelUI* pLabel = (CLabelUI*)m_PaintManager.FindControl(L"login_sdkver");
+
+	WCHAR wszVersion[128] = { 0 };
+	demo::ConvertUtf8ToUnicode(CSdkManager::GetInstance().GetFspEngin()->GetVersion().c_str(),
+		wszVersion, 128);
+	CDuiString strVerInfo;
+	strVerInfo.Format(L"SdkVersion:  %s", wszVersion);
+	pLabel->SetText(strVerInfo);
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：窗口销毁处理
+ * 参  数：略
+ * 返回值：LRESULT
+ ------------------------------------------------------------------------------*/
+LRESULT CDuiLoginWnd::OnDestroy(UINT, WPARAM, LPARAM, BOOL& bHandled)
+{
+	PostQuitMessage(0);
+	return 0;
 }

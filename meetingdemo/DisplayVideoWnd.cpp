@@ -14,11 +14,7 @@
 #include "MediaInfoWnd.h"
 #include "VideoWnd.h"
 
-/*------------------------------------------------------------------------------
- * 描  述：构造函数
- * 参  数：无
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 CDisplayVideoWnd::CDisplayVideoWnd()
 	: m_eRenderMode(fsp::RENDERMODE_SCALE_FILL)
 	, m_pInfoWnd(nullptr)
@@ -26,19 +22,15 @@ CDisplayVideoWnd::CDisplayVideoWnd()
 	, m_bHasAudio(false)
 	, m_bHasVideo(false)
 	, m_dwCamIndex(0xFFFFFFFF)
-	, m_dwMicIndex(0xFFFFFFFF)
 	, m_bIsLocal(false)
 	, m_bIsVideoMaximized(false)
 	, m_pEventCallback(nullptr)
 {
+	m_RemoteControlState = RemoteControl_No;
 	ZeroMemory(&m_rectDisplay, sizeof(m_rectDisplay));
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：析构函数
- * 参  数：无
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 CDisplayVideoWnd::~CDisplayVideoWnd()
 {
 	fsp::IFspEngine* pEngin = CSdkManager::GetInstance().GetFspEngin();
@@ -56,23 +48,13 @@ CDisplayVideoWnd::~CDisplayVideoWnd()
 		delete m_pInfoWnd;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：设置事件处理回调对象
- * 参  数：[in] pCallback 回调对象
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CDisplayVideoWnd::SetEventCallback(IEventCallback* pCallback)
 {
 	m_pEventCallback = pCallback;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：事件处理
- * 参  数：[in] uMsg	消息类型
- *         [in] wParam	参数
- *         [in] lParam	参数
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CDisplayVideoWnd::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	if (uMsg == WM_LBUTTONDBLCLK)
@@ -82,32 +64,30 @@ void CDisplayVideoWnd::OnEvent(UINT uMsg, WPARAM wParam, LPARAM lParam)
 		m_pEventCallback->OnEvent(uMsg, wParam, lParam);
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：窗口是否被双击放大了
- * 参  数：无
- * 返回值：是/否
-------------------------------------------------------------------------------*/
+
 bool CDisplayVideoWnd::IsVideoMaximized()
 {
 	return m_bIsVideoMaximized;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：显示或隐藏窗口
- * 参  数：[in] bShow 是否显示窗口
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CDisplayVideoWnd::ShowWindow(bool bShow)
 {
 	m_pInfoWnd->ShowWindow(bShow);
 	m_pVideoWnd->ShowWindow(bShow);
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：初始化
- * 参  数：[in] hParentWnd	父窗口句柄
- * 返回值：无
-------------------------------------------------------------------------------*/
+void CDisplayVideoWnd::OnRemoteControlOperation(fsp::RemoteControlOperationType operation)
+{
+	if (operation == fsp::REMOTE_CONTROL_ACCEPT) {
+		m_RemoteControlState = RemoteControl_Ing;
+	}
+	else if (operation == fsp::REMOTE_CONTROL_REJECT) {
+		m_RemoteControlState = RemoteControl_No;
+	}
+}
+
+
 void CDisplayVideoWnd::Init(HWND hParentWnd)
 {
 	m_hParentWnd = hParentWnd;
@@ -119,14 +99,11 @@ void CDisplayVideoWnd::Init(HWND hParentWnd)
 	m_pInfoWnd = new CMediaInfoWnd(L"video_info.xml", L"VideoInfo");
 	m_pInfoWnd->CreateWnd(hParentWnd, L"InfoWnd", UI_WNDSTYLE_CHILD, true);
 	m_pInfoWnd->GetPaintManager().AddNotifier(this);
+
+	RefreshUserName();
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：设置窗口的矩形区域
- * 参  数：[in] rect 矩形区域
- *         [in] bShow 改变矩形区域后，是否立即显示
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CDisplayVideoWnd::SetWndRect(const RECT& rect, bool bShow)
 {
 	m_rectDisplay = rect;
@@ -148,22 +125,14 @@ void CDisplayVideoWnd::SetWndRect(const RECT& rect, bool bShow)
 	m_pInfoWnd->SetWndRect(infoRect);
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：广播麦克风后，更改麦克风图标
- * 参  数：无
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CDisplayVideoWnd::OpenMic()
 {
 	CLabelUI* pMicLabel = (CLabelUI*)m_pInfoWnd->GetPaintManager().FindControl(L"label_mic");
 	pMicLabel->SetBkImage(L"img\\video\\video_stat_audio_open.png");
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：取消广播麦克风后，更改麦克风图标
- * 参  数：无
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CDisplayVideoWnd::CloseMic()
 {
 	CLabelUI* pMicLabel = (CLabelUI*)m_pInfoWnd->GetPaintManager().FindControl(L"label_mic");
@@ -173,48 +142,33 @@ void CDisplayVideoWnd::CloseMic()
 	pVolLabel->SetBkImage(L"img\\video\\video_stats_volume_bg.png");
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：根据麦克风声音能量值大小，改变能量值图片
- * 参  数：[in] dwEnergy 麦克风声音能量值大小
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CDisplayVideoWnd::OnMicEnergyChange(DWORD dwEnergy)
 {
 	WCHAR szBkImage[128];
 	if (dwEnergy / 10 == 0)
-		_snwprintf(szBkImage, 128, L"img\\video\\video_stats_volume_bg.png");
+		_snwprintf_s(szBkImage, 128, L"img\\video\\video_stats_volume_bg.png");
 	else
-		_snwprintf(szBkImage, 128, L"img\\video\\video_stats_volume%d.png", dwEnergy / 10);
+		_snwprintf_s(szBkImage, 128, L"img\\video\\video_stats_volume%d.png", dwEnergy / 10);
 
 	CLabelUI* pMicLabel = (CLabelUI*)m_pInfoWnd->GetPaintManager().FindControl(L"label_volume");
 	pMicLabel->SetBkImage(szBkImage);
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：刷新流量/帧率/分辨率显示
- * 参  数：无
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CDisplayVideoWnd::OnVideoStatsChange(LPCTSTR szVideoStats)
 {
 	CLabelUI* pVideoInfoLabel = (CLabelUI*)m_pInfoWnd->GetPaintManager().FindControl(L"label_video_info");
 	pVideoInfoLabel->SetText(szVideoStats);
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：构建菜单项
- * 参  数：[in] szName		菜单项名字
- *         [in] szText		显示的文本
- *         [in] bRadio		是否是单选按钮
- *         [in] bSelected	是否默认选择
- *         [in] bHasSubMenu	是否有子菜单项
- * 返回值：菜单项指针
-------------------------------------------------------------------------------*/
+
 CMenuElementUI* CDisplayVideoWnd::ConstructMenuItem(LPCTSTR szName, LPCTSTR szText, bool bRadio, bool bSelected, bool bHasSubMenu)
 {
 	CMenuElementUI* pElement = new CMenuElementUI;
 	pElement->SetAttribute(L"width", L"180");
 	pElement->SetAttribute(L"height", L"36");
+	pElement->SetAttribute(L"name", szName);
 
 	CHorizontalLayoutUI* pHLayout = new CHorizontalLayoutUI;
 	pHLayout->SetAttribute(L"width", L"180");
@@ -239,6 +193,7 @@ CMenuElementUI* CDisplayVideoWnd::ConstructMenuItem(LPCTSTR szName, LPCTSTR szTe
 	else
 	{
 		CLabelUI* pPlaceholder = new CLabelUI;
+		pPlaceholder->SetAttribute(L"name", szName);
 		pPlaceholder->SetAttribute(L"width", L"34");
 
 		pHLayout->Add(pPlaceholder);
@@ -266,88 +221,109 @@ CMenuElementUI* CDisplayVideoWnd::ConstructMenuItem(LPCTSTR szName, LPCTSTR szTe
 	return pElement;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：构建菜单
- * 参  数：[in] pMenu 菜单对象
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CDisplayVideoWnd::ConstructMenu(CMenuWnd* pMenu)
 {
 	// FIXME: xml布局文件中额外增加了一个空的MenuElement作为占位符，否则动态添加的
 	// 菜单项无法显示，可能是个bug，暂时没有时间去解决，这里首先要移除占位符
 	((CMenuUI*)pMenu->m_pm.GetRoot())->Remove(pMenu->m_pm.FindControl(L"placeholder"));
 
-	// 先添加视频显示模式菜单项
-	CMenuElementUI* pSfppElement = ConstructMenuItem(L"video_disp_sfpp", 
-		L"视频缩放平铺显示", 
-		true, 
-		m_eRenderMode == fsp::RENDERMODE_SCALE_FILL, 
-		false);
-	CMenuElementUI* pDbcjElement = ConstructMenuItem(L"video_disp_dbcj", 
-		L"视频等比裁剪显示", 
-		true, 
-		m_eRenderMode == fsp::RENDERMODE_CROP_FILL, 
-		false);
-	CMenuElementUI* pDbwzElement = ConstructMenuItem(L"video_disp_dbwz", 
-		L"视频等比完整显示", 
-		true, 
-		m_eRenderMode == fsp::RENDERMODE_FIT_CENTER, 
-		false);
-
-	((CMenuUI*)pMenu->m_pm.GetRoot())->Add(pSfppElement);
-	((CMenuUI*)pMenu->m_pm.GetRoot())->Add(pDbcjElement);
-	((CMenuUI*)pMenu->m_pm.GetRoot())->Add(pDbwzElement);
-
-	// 再添加切换摄像头菜单项
-	if (m_bHasVideo && m_bIsLocal)
-	{
-		CMenuElementUI* pSwitchElement = ConstructMenuItem(L"cam_switch", L"切换摄像头", false, false, true);
-
-		fsp::IFspEngine* pEngin = CSdkManager::GetInstance().GetFspEngin();
-		fsp::Vector<fsp::VideoDeviceInfo> info = pEngin->GetDeviceManager()->GetCameraDevices();
-		DWORD dwCamIndex = 0;
-		for (auto iter : info)
-		{
-			WCHAR szOptionName[16];
-			_snwprintf(szOptionName, 16, L"menu_cam_%d", dwCamIndex);
-
-			WCHAR szCamName[32];
-			demo::ConvertUtf8ToUnicode(iter.device_name.c_str(), szCamName, 32);
-
-			CMenuElementUI* pElement = ConstructMenuItem(szOptionName, 
-				szCamName, 
-				true, 
-				dwCamIndex == m_dwCamIndex, 
-				false);
-
-			pSwitchElement->Add(pElement);
-
-			dwCamIndex++;
+	if (m_strVideoId == fsp::RESERVED_VIDEOID_SCREENSHARE) {
+		CDuiString strControlCaption = L"远程控制桌面";
+		if (m_RemoteControlState == RemoteControl_Ing) {
+			strControlCaption = L"取消控制";
 		}
-		((CMenuUI*)pMenu->m_pm.GetRoot())->Add(pSwitchElement);
+		else if (m_RemoteControlState == RemoteControl_Waiting) {
+			strControlCaption = L"等待共享端接受";
+		}
+		CMenuElementUI* pRemoteControlElement = ConstructMenuItem(L"video_operate_remotecontrol",
+			strControlCaption,
+			false,
+			false,
+			false);
+		((CMenuUI*)pMenu->m_pm.GetRoot())->Add(pRemoteControlElement);
 	}
+	else {
+		// 先添加视频显示模式菜单项
+		CMenuElementUI* pSfppElement = ConstructMenuItem(L"video_disp_sfpp",
+			L"视频缩放平铺显示",
+			true,
+			m_eRenderMode == fsp::RENDERMODE_SCALE_FILL,
+			false);
+		CMenuElementUI* pDbcjElement = ConstructMenuItem(L"video_disp_dbcj",
+			L"视频等比裁剪显示",
+			true,
+			m_eRenderMode == fsp::RENDERMODE_CROP_FILL,
+			false);
+		CMenuElementUI* pDbwzElement = ConstructMenuItem(L"video_disp_dbwz",
+			L"视频等比完整显示",
+			true,
+			m_eRenderMode == fsp::RENDERMODE_FIT_CENTER,
+			false);
+
+		((CMenuUI*)pMenu->m_pm.GetRoot())->Add(pSfppElement);
+		((CMenuUI*)pMenu->m_pm.GetRoot())->Add(pDbcjElement);
+		((CMenuUI*)pMenu->m_pm.GetRoot())->Add(pDbwzElement);
+
+		// 再添加切换摄像头菜单项
+		if (m_bHasVideo && m_bIsLocal)
+		{
+			CMenuElementUI* pSwitchElement = ConstructMenuItem(L"cam_switch", L"切换摄像头", false, false, true);
+
+			fsp::IFspEngine* pEngin = CSdkManager::GetInstance().GetFspEngin();
+			fsp::Vector<fsp::VideoDeviceInfo> info = pEngin->GetDeviceManager()->GetCameraDevices();
+			DWORD dwCamIndex = 0;
+			for (auto iter : info)
+			{
+				WCHAR szOptionName[16];
+				_snwprintf_s(szOptionName, 16, L"menu_cam_%d", dwCamIndex);
+
+				WCHAR szCamName[32];
+				demo::ConvertUtf8ToUnicode(iter.device_name.c_str(), szCamName, 32);
+
+				CMenuElementUI* pElement = ConstructMenuItem(szOptionName,
+					szCamName,
+					true,
+					dwCamIndex == m_dwCamIndex,
+					false);
+
+				pSwitchElement->Add(pElement);
+
+				dwCamIndex++;
+			}
+			((CMenuUI*)pMenu->m_pm.GetRoot())->Add(pSwitchElement);
+		}
+	}
+	
+	//接收的是屏幕共享，操作菜单
+	CMenuElementUI* pChangeSizeElement = ConstructMenuItem(L"video_disp_changesize",
+		m_bIsVideoMaximized ? L"还原" : L"最大化",
+		false,
+		false,
+		false);
+	((CMenuUI*)pMenu->m_pm.GetRoot())->Add(pChangeSizeElement);
+
 
 	pMenu->ResizeMenu();
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：设置视频显示模式：屏幕/等比裁剪/等比完整
- * 参  数：[in] mode 显示模式
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CDisplayVideoWnd::SetVideoRenderMode(fsp::RenderMode mode)
 {
-	if (m_bHasVideo && m_eRenderMode != mode)
-		CSdkManager::GetInstance().GetFspEngin()->SetRenderMode(GetVideoWnd(), mode);
+	if (m_bHasVideo && m_eRenderMode != mode) {
+		if (m_bIsLocal) {
+			CSdkManager::GetInstance().GetFspEngin()->AddVideoPreview(m_dwCamIndex, GetVideoWnd(), m_eRenderMode);
+		}
+		else {
+			CSdkManager::GetInstance().GetFspEngin()->SetRemoteVideoRender(m_strUserId.c_str(), m_strVideoId.c_str(), GetVideoWnd(), mode);
+		}
+		
+	}
 
 	m_eRenderMode = mode;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：切换摄像头处理
- * 参  数：[in] dwCamIndex 新的摄像头索引
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CDisplayVideoWnd::ChangeCamIndex(DWORD dwCamIndex)
 {
 	if (m_bHasVideo && m_bIsLocal)
@@ -361,8 +337,7 @@ void CDisplayVideoWnd::ChangeCamIndex(DWORD dwCamIndex)
 		pEngin->RemoveVideoPreview(m_dwCamIndex, GetVideoWnd());
 
 		// 重新preview新的摄像头
-		pEngin->AddVideoPreview(dwCamIndex, GetVideoWnd());
-		pEngin->SetRenderMode(GetVideoWnd(), m_eRenderMode);
+		pEngin->AddVideoPreview(dwCamIndex, GetVideoWnd(), m_eRenderMode);
 
 		// 通知主界面广播的摄像头变化了
 		CSdkManager::GetInstance().GetFrameWnd()->SendMessageW(
@@ -372,11 +347,7 @@ void CDisplayVideoWnd::ChangeCamIndex(DWORD dwCamIndex)
 	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：DUILIB的通知消息处理
- * 参  数：[in] msg 通知消息
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CDisplayVideoWnd::Notify(TNotifyUI& msg)
 {
 	if (msg.sType == DUI_MSGTYPE_CLICK)
@@ -418,13 +389,26 @@ void CDisplayVideoWnd::Notify(TNotifyUI& msg)
 			SetVideoRenderMode(RENDERMODE_FIT_CENTER);
 		}
 	}
+	else if (msg.sType == DUI_MSGTYPE_ITEMCLICK) {
+		if (msg.pSender->GetName() == L"video_disp_changesize") {
+			OnEvent(WM_LBUTTONDBLCLK, 0, 0);
+		}
+		else if (msg.pSender->GetName() == L"video_operate_remotecontrol") {
+			if (m_RemoteControlState == RemoteControl_Ing) {
+				CSdkManager::GetInstance().GetFspEngin()->RemoteControlOperation(m_strUserId,
+					fsp::REMOTE_CONTROL_CANCEL);
+				m_RemoteControlState = RemoteControl_No;
+			}
+			else if (m_RemoteControlState == RemoteControl_No) {
+				CSdkManager::GetInstance().GetFspEngin()->RemoteControlOperation(m_strUserId,
+					fsp::REMOTE_CONTROL_REQUEST);
+				m_RemoteControlState = RemoteControl_Waiting;
+			}
+		}
+	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：定时器处理
- * 参  数：无
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CDisplayVideoWnd::OnTimer()
 {
 	fsp::IFspEngine* pEngin = CSdkManager::GetInstance().GetFspEngin();
@@ -446,7 +430,7 @@ void CDisplayVideoWnd::OnTimer()
 		if (fsp::ERR_OK == pEngin->GetVideoStats(m_strUserId, m_strVideoId, &statsInfo))
 		{
 			WCHAR szVideoStats[32];
-			_snwprintf(szVideoStats, 32,
+			_snwprintf_s(szVideoStats, 32,
 				L"%dK %dF %d*%d",
 				statsInfo.bitrate / 1024,
 				statsInfo.framerate,
@@ -457,22 +441,13 @@ void CDisplayVideoWnd::OnTimer()
 	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：窗口是否空闲，既没有音频也没有视频
- * 参  数：无
- * 返回值：是/否
-------------------------------------------------------------------------------*/
+
 bool CDisplayVideoWnd::IsIdle()
 {
 	return !m_bHasAudio && !m_bHasVideo;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：窗口是否正在显示远端用户的某一路视频
- * 参  数：[in] strUserId	用户ID
- *         [in] strVideoId	视频ID
- * 返回值：是/否
-------------------------------------------------------------------------------*/
+
 bool CDisplayVideoWnd::IsHoldRemoteVideo(const fsp::String& strUserId, const fsp::String& strVideoId)
 {
 	return m_bHasVideo 
@@ -480,71 +455,43 @@ bool CDisplayVideoWnd::IsHoldRemoteVideo(const fsp::String& strUserId, const fsp
 		&& (strcmp(m_strVideoId.c_str(), strVideoId.c_str()) == 0);
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：窗口是否正在显示远端用户的视频
- * 参  数：[in] strUserId	用户ID
- * 返回值：是/否
-------------------------------------------------------------------------------*/
+
 bool CDisplayVideoWnd::IsHoldRemoteVideo(const fsp::String& strUserId)
 {
 	return m_bHasVideo && (strcmp(m_strUserId.c_str(), strUserId.c_str()) == 0);
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：窗口是否正在显示远端用户的音频
- * 参  数：[in] strUserId	用户ID
- * 返回值：是/否
-------------------------------------------------------------------------------*/
+
 bool CDisplayVideoWnd::IsHoldRemoteAudio(const fsp::String& strUserId)
 {
 	return m_bHasAudio && (strcmp(m_strUserId.c_str(), strUserId.c_str()) == 0);
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：窗口是否正在显示本地某一路视频
- * 参  数：[in] dwCamIndex 摄像头索引
- * 返回值：是/否
-------------------------------------------------------------------------------*/
+
 bool CDisplayVideoWnd::IsHoldLocalVideo(DWORD dwCamIndex)
 {
 	return m_bHasVideo && m_bIsLocal && m_dwCamIndex == dwCamIndex;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：窗口是否正在显示本地视频
- * 参  数：无
- * 返回值：是/否
-------------------------------------------------------------------------------*/
+
 bool CDisplayVideoWnd::IsHoldLocalVideo()
 {
 	return m_bHasVideo && m_bIsLocal;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：窗口是否正在显示本地某一路音频
- * 参  数：[in] dwMicIndex 麦克风索引
- * 返回值：是/否
-------------------------------------------------------------------------------*/
+
 bool CDisplayVideoWnd::IsHoldLocalAudio(DWORD dwMicIndex)
 {
-	return m_bHasAudio && m_bIsLocal && m_dwMicIndex == dwMicIndex;
+	return m_bHasAudio && m_bIsLocal;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：窗口是否正在显示本地音频
- * 参  数：无
- * 返回值：是/否
-------------------------------------------------------------------------------*/
+
 bool CDisplayVideoWnd::IsHoldLocalAudio()
 {
 	return m_bHasAudio && m_bIsLocal;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：刷新用户图标和用户名称
- * 参  数：无
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CDisplayVideoWnd::RefreshUserName()
 {
 	CLabelUI* pUserLabel = (CLabelUI*)m_pInfoWnd->GetPaintManager().FindControl(L"label_user");
@@ -554,6 +501,9 @@ void CDisplayVideoWnd::RefreshUserName()
 	{
 		pIconLabel->SetBkImage(L"img\\video\\video_user_disable.png");
 		pUserLabel->SetText(L"Nobody");
+
+		CLabelUI* pVideoInfoLabel = (CLabelUI*)m_pInfoWnd->GetPaintManager().FindControl(L"label_video_info");
+		pVideoInfoLabel->SetText(L"0K 0F 0*0");
 	}
 	else
 	{
@@ -572,13 +522,18 @@ void CDisplayVideoWnd::RefreshUserName()
 
 	pUserLabel->Invalidate();
 	pIconLabel->Invalidate();
+
+	//有视频才显示菜单按钮
+	CButtonUI* pVideoBtn = (CButtonUI*)m_pInfoWnd->GetPaintManager().FindControl(L"video_menu");
+	if (m_bHasVideo) {
+		pVideoBtn->SetVisible(true);
+	}
+	else {
+		pVideoBtn->SetVisible(false);
+	}
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：广播摄像头处理
- * 参  数：[in] dwCamIndex 摄像头索引
- * 返回值：成功/失败
-------------------------------------------------------------------------------*/
+
 bool CDisplayVideoWnd::StartPublishCam(DWORD dwCamIndex)
 {
 	if (m_bHasVideo)
@@ -588,7 +543,7 @@ bool CDisplayVideoWnd::StartPublishCam(DWORD dwCamIndex)
 
 	// 广播本地视频
 	char szVideoId[32];
-	sprintf(szVideoId, "LocalCam_%d", dwCamIndex);
+	sprintf_s(szVideoId, "LocalCam_%d", dwCamIndex);
 	if (fsp::ERR_OK != pEngin->StartPublishVideo(szVideoId, dwCamIndex))
 	{
 		PostMessageW(CSdkManager::GetInstance().GetFrameWnd()->GetHWND(), 
@@ -597,8 +552,7 @@ bool CDisplayVideoWnd::StartPublishCam(DWORD dwCamIndex)
 	}
 
 	// 显示本地视频
-	pEngin->AddVideoPreview(dwCamIndex, GetVideoWnd());
-	pEngin->SetRenderMode(GetVideoWnd(), m_eRenderMode);
+	pEngin->AddVideoPreview(dwCamIndex, GetVideoWnd(), m_eRenderMode);
 	
 	char szUserId[128];
 	demo::ConvertUnicodeToUtf8(CSdkManager::GetInstance().GetLoginUser(), szUserId, 128);
@@ -616,11 +570,7 @@ bool CDisplayVideoWnd::StartPublishCam(DWORD dwCamIndex)
 	return true;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：停止广播摄像头处理
- * 参  数：[in] dwCamIndex 摄像头索引
- * 返回值：成功/失败
-------------------------------------------------------------------------------*/
+
 bool CDisplayVideoWnd::StopPublishCam(DWORD dwCamIndex)
 {
 	bool bResult = false;
@@ -647,18 +597,12 @@ bool CDisplayVideoWnd::StopPublishCam(DWORD dwCamIndex)
 	return bResult;
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：添加远端某用户的某一路视频
- * 参  数：[in] strUserId	用户ID
- *         [in] strVideoId	视频ID
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CDisplayVideoWnd::AddRemoteVideo(const fsp::String& strUserId, const fsp::String& strVideoId)
 {
 	fsp::IFspEngine* pEngin = CSdkManager::GetInstance().GetFspEngin();
 
-	pEngin->SetRemoteVideoRender(strUserId, strVideoId, GetVideoWnd());
-	pEngin->SetRenderMode(GetVideoWnd(), m_eRenderMode);
+	pEngin->SetRemoteVideoRender(strUserId, strVideoId, GetVideoWnd(), m_eRenderMode);
 
 	m_dwCamIndex = 0;
 	m_bHasVideo = true;
@@ -669,12 +613,7 @@ void CDisplayVideoWnd::AddRemoteVideo(const fsp::String& strUserId, const fsp::S
 	RefreshUserName();
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：删除远端某用户的某一路视频
- * 参  数：[in] strUserId	用户ID
- *         [in] strVideoId	视频ID
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CDisplayVideoWnd::DelRemoteVideo(const fsp::String& strUserId, const fsp::String& strVideoId)
 {
 	if (m_bHasVideo && !m_bIsLocal
@@ -690,11 +629,7 @@ void CDisplayVideoWnd::DelRemoteVideo(const fsp::String& strUserId, const fsp::S
 	RefreshUserName();
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：添加远端某用户的音频
- * 参  数：[in] strUserId	用户ID
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CDisplayVideoWnd::AddRemoteAudio(const fsp::String& strUserId)
 {
 	if (m_bHasVideo && strcmp(m_strUserId.c_str(), strUserId.c_str()) != 0)
@@ -711,11 +646,7 @@ void CDisplayVideoWnd::AddRemoteAudio(const fsp::String& strUserId)
 	RefreshUserName();
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：删除远端某用户的音频
- * 参  数：[in] strUserId	用户ID
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CDisplayVideoWnd::DelRemoteAudio(const fsp::String& strUserId)
 {
 	if (m_bHasAudio && strcmp(m_strUserId.c_str(), strUserId.c_str()) == 0)
@@ -728,11 +659,15 @@ void CDisplayVideoWnd::DelRemoteAudio(const fsp::String& strUserId)
 	RefreshUserName();
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：广播本地麦克风
- * 参  数：[in] dwMicIndex 麦克风索引
- * 返回值：无
-------------------------------------------------------------------------------*/
+void CDisplayVideoWnd::DelCurrentAV()
+{
+	StopPublishCam(m_dwCamIndex);
+	StopPublishMic();
+
+	DelRemoteVideo(m_strUserId.c_str(), m_strVideoId.c_str());
+	DelRemoteAudio(m_strUserId.c_str());
+}
+
 void CDisplayVideoWnd::StartPublishMic(DWORD dwMicIndex)
 {
 	if (m_bHasAudio)
@@ -749,7 +684,6 @@ void CDisplayVideoWnd::StartPublishMic(DWORD dwMicIndex)
 	demo::ConvertUnicodeToUtf8(CSdkManager::GetInstance().GetLoginUser(), szUserId, 128);
 
 	m_bHasAudio		= true;
-	m_dwMicIndex	= dwMicIndex;
 	m_bIsLocal		= true;
 	m_strUserId		= szUserId;
 
@@ -757,14 +691,10 @@ void CDisplayVideoWnd::StartPublishMic(DWORD dwMicIndex)
 	RefreshUserName();
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：取消广播本地麦克风
- * 参  数：[in] dwMicIndex 麦克风索引
- * 返回值：成功/失败
-------------------------------------------------------------------------------*/
-bool CDisplayVideoWnd::StopPublishMic(DWORD dwMicIndex)
+
+bool CDisplayVideoWnd::StopPublishMic()
 {
-	if (!m_bHasAudio || m_dwMicIndex != dwMicIndex)
+	if (!m_bHasAudio)
 		return false;
 
 	CSdkManager::GetInstance().GetFspEngin()->StopPublishAudio();
@@ -789,11 +719,7 @@ void CDisplayVideoWnd::SetVideoParam()
 	mgr.GetFspEngin()->SetVideoProfile(m_strVideoId, profile);
 }
 
-/*------------------------------------------------------------------------------
- * 描  述：视频参数改变，要重新设置
- * 参  数：无
- * 返回值：无
-------------------------------------------------------------------------------*/
+
 void CDisplayVideoWnd::OnVideoParamChanged()
 {
 	if (m_bHasVideo && m_bIsLocal)

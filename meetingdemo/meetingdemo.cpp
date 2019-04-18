@@ -21,9 +21,16 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 		return -1;
 
 	if (CSdkManager::GetInstance().Init())
-		CSdkManager::GetInstance().Start();
+		CSdkManager::GetInstance().OpenLoginWnd();
 
-	demo::CConfigParser::GetInstance().Serialize();
+	MSG msg;
+	while (GetMessage(&msg, NULL, 0, 0) > 0)
+	{
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+
+	CSdkManager::GetInstance().Destroy();
 
 	CoUninitialize();
 

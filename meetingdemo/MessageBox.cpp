@@ -79,9 +79,12 @@ LRESULT CMessageBox::OnDestroy(UINT, WPARAM, LPARAM, BOOL& bHandled)
  ------------------------------------------------------------------------------*/
 void CMessageBox::OnClick(TNotifyUI& msg)
 {
-	if (msg.pSender->GetName() == L"btn_ok" || msg.pSender->GetName() == L"btn_cancel")
+	if (msg.pSender->GetName() == L"btn_ok")
 	{
-		Close();
+		Close(IDOK);
+	}
+	else if(msg.pSender->GetName() == L"btn_cancel"){
+		Close(IDCANCEL);
 	}
 }
 
@@ -94,6 +97,20 @@ void CMessageBox::SetText(LPCTSTR szText)
 {
 	CLabelUI* pLabel = (CLabelUI*)m_PaintManager.FindControl(L"label_text");
 	pLabel->SetText(szText);
+}
+
+/*------------------------------------------------------------------------------
+ * 描  述：设置按钮文本
+ * 参  数：[in] szText 提示文本
+ * 返回值：无
+ ------------------------------------------------------------------------------*/
+void CMessageBox::SetBtnText(LPCTSTR szCancel, LPCTSTR szOk)
+{
+	CButtonUI* pBtnCancel = (CButtonUI*)m_PaintManager.FindControl(L"btn_cancel");
+	pBtnCancel->SetText(szCancel);
+
+	CButtonUI* pBtnOk = (CButtonUI*)m_PaintManager.FindControl(L"btn_ok");
+	pBtnOk->SetText(szOk);
 }
 
 /*------------------------------------------------------------------------------

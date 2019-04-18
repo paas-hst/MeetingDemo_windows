@@ -1,0 +1,12 @@
+
+#vistual studio files
+*.vcxproj.user
+*.v12.suo
+*.opensdf
+*.sdf
+ipch/
+
+#windows build中间文件
+intermediate/
+output_Debug/
+output_Release/
