@@ -25,7 +25,7 @@ FSP SDK支持 iOS / Android / Windows / macOS 等多个平台，你可以查看�
 首先在 [FSP官网 注册](http://customer.paas.hst.com/register) 注册账号，并创建自己的应用，获取到 AppID。
 编辑工程下的appinfo.xml, 将AppId， AppSecret信息配置好，再次说明：AppSecret不应该保存在客户端，应该放在服务端程序。
 
-然后在 [FSP官网 下载](http://paas.hst.com/downloadSDK) 下载SDK，解压后将其中的 **sdk** 文件夹复制到本项目目录下（并覆盖原有旧目录）。
+然后在 [FSP官网 下载](http://paas.hst.com/developer/downloadSDK) 下载SDK，解压后将其中的 **sdk** 文件夹复制到本项目目录下（并覆盖原有旧目录）。
 
 最后使用 Visual Studio 2013 打开 meetingdemo.sln，编译整个解决方案即可运行。
 
@@ -35,6 +35,6 @@ FSP SDK支持 iOS / Android / Windows / macOS 等多个平台，你可以查看�
 
 ## 联系我们
 
-- 完整的 API 文档见 [开发者中心](http://paas.hst.com/platformDesc)
+- 完整的 API 文档见 [开发者中心](http://paas.hst.com/developer/platformDesc)
 - 如果发现demo的bug, 或想优化demo代码， 欢迎提交
 - 如果有任何咨询问题, 可以拨打 400-1199-666， 0755 83885517, 或加入QQ群 783541706 提问
