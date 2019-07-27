@@ -1,9 +1,9 @@
-/*##############################################################################
- * ÎÄ¼ş£ºConfigParser.h
- * ÃèÊö£ºÅäÖÃÎÄ¼ş½âÎöÆ÷ÉùÃ÷
- * ×÷Õß£ºTeck
- * Ê±¼ä£º2018Äê5ÔÂ24ÈÕ
- * °æÈ¨£ºCopyright(C) 2018 Fsmeeting.com. All rights reserved.
+ï»¿/*##############################################################################
+ * æ–‡ä»¶ï¼šConfigParser.h
+ * æè¿°ï¼šé…ç½®æ–‡ä»¶è§£æå™¨å£°æ˜
+ * ä½œè€…ï¼šTeck
+ * æ—¶é—´ï¼š2018å¹´5æœˆ24æ—¥
+ * ç‰ˆæƒï¼šCopyright(C) 2018 Fsmeeting.com. All rights reserved.
  ##############################################################################*/
 #pragma once
 
@@ -15,12 +15,17 @@ namespace demo
 
 struct ClientConfig
 {
+	bool bAppUserDefine;
+
 	std::string strAppId;
 	std::string strAppSecret;
-	std::string strServerAddr;
-	bool bUserDefine;
 	std::string strUserAppId;
 	std::string strUserAppSecret;
+
+	bool bServerUserDefine;
+
+	std::string strServerAddr;
+	std::string strUserServerAddr;
 };
 
 class CConfigParser
@@ -34,14 +39,14 @@ public:
 	ClientConfig& GetClientConfig() { return m_ClientConfig; }
 
 private:
-	// ²»ÔÊĞí¿½±´ºÍ¸³Öµ
+	// ä¸å…è®¸æ‹·è´å’Œèµ‹å€¼
 	CConfigParser() {}
 	CConfigParser(const CConfigParser&) {}
 	CConfigParser& operator=(const CConfigParser&) {}
 
 private:
 	ClientConfig m_ClientConfig;
-	std::string m_config_file;
+	std::string m_ConfigFile;
 };
 
 }

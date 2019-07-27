@@ -29,7 +29,6 @@ class AccessToken
 	std::string ParseToJson(const std::string &token);
 
 	std::string app_id;
-	std::string group_id;
 	std::string user_id;
 	uint32_t expire_time;
 
@@ -57,7 +56,6 @@ std::string AccessToken::Build()
 	std::string rawContent("{");
 
 	rawContent.append("\"aid\":\"").append(app_id).append("\",");
-	rawContent.append("\"gid\":\"").append(group_id).append("\",");
 	rawContent.append("\"uid\":\"").append(user_id).append("\",");
 
 	if (expire_time != 0)

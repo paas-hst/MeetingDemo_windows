@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window size="1200,700" caption="0,0,0,30" sizebox="4,4,4,4">
+	<Font id="1" name="微软雅黑" size="16" bold="false" />
+	<Font id="2" name="微软雅黑" size="14" bold="false" />
+	<Font id="3" name="微软雅黑" size="12" bold="false" />
+	<Default name="VScrollBar" value="width=&quot;6&quot; thumbnormalimage=&quot;img\\scrollbar_thumb.png&quot;" />
+	<VerticalLayout>
+		<!-- 顶部标题栏 -->
+		<HorizontalLayout height="36" bkcolor="0XFF2C304E">
+			<Label name="main_logo" width="20" height="20" bkimage="img\\login\\titlebar_logo.png" padding="11, 8, 11, 8" />
+			<Label name="main_caption" text="好视通云通信" textcolor="#FFFFFFFF" width="100" height="16" padding="0,10,0,10" />
+			<Label name="group_user" textcolor="#FFFFFFFF" width="800" height="30" align="center" padding="70,0,0,0" />
+			<Control />
+			<Button name="minbtn" tooltip="最小化" height="30" width="30" normalimage="img\\titlebar_mini.png" hotimage="img\\titlebar_mini_hot.png" pushedimage="img\\titlebar_mini_press.png"/>
+			<Button name="maxbtn" tooltip="最大化" height="30" width="30" normalimage="img\\titlebar_max.png" hotimage="img\\titlebar_max_hot.png" pushedimage="img\\titlebar_max_press.png"/>
+			<Button name="restorebtn" tooltip="还原" visible="false" height="30" width="30" normalimage="img\\titlebar_restore.png" hotimage="img\\titlebar_restore_hot.png" pushedimage="img\\titlebar_restore_press.png"/>
+			<Button name="closebtn" tooltip="关闭" height="30" width="30" normalimage="img\\titlebar_close.png" hotimage="img\\titlebar_close_hot.png" pushedimage="img\\titlebar_close_press.png"/>
+		</HorizontalLayout>
+
+		<HorizontalLayout>
+			<VerticalLayout bkcolor="#FFD8D8D8">
+				<HorizontalLayout height="24" bkcolor="#FFFFFFFF">
+					<Option name="tabopt_video" width="90" text="视 频" selectedimage="img\\main_tonal_bg.png" textcolor="#ff454545" hottextcolor="#ff6a7dfe" selectedtextcolor="#ffffffff" group="main_tab" selected="true" />
+					<Option name="tabopt_screenshare" width="90" text="屏幕共享" selectedimage="img\\main_tonal_bg.png" textcolor="#ff454545" hottextcolor="#ff6a7dfe" selectedtextcolor="#ffffffff" group="main_tab"/>
+					<Control />
+					<Label name="label_group_info" width="150" padding="0, 0, 20, 0" align="right" textcolor="#ff454545" font="3" />
+				</HorizontalLayout>
+
+				<TabLayout name="main_tab">
+					<VideoPanelLayout name="main_video_container" content="video">
+						<VideoPanel name="main_video_panel1" width="600" height="300" float="true" textcolor="#FFFFFFFF" bkcolor="0xFF000000"/>
+						<VideoPanel name="main_video_panel2" width="600" height="300" float="true" textcolor="#FFFFFFFF" bkcolor="0xFF000000"/>
+						<VideoPanel name="main_video_panel3" width="600" height="300" float="true" textcolor="#FFFFFFFF" bkcolor="0xFF000000"/>
+						<VideoPanel name="main_video_panel4" width="600" height="300" float="true" textcolor="#FFFFFFFF" bkcolor="0xFF000000"/>
+						<VideoPanel name="main_video_panel5" width="600" height="300" float="true" textcolor="#FFFFFFFF" bkcolor="0xFF000000"/>
+						<VideoPanel name="main_video_panel6" width="600" height="300" float="true" textcolor="#FFFFFFFF" bkcolor="0xFF000000"/>
+					</VideoPanelLayout>
+
+					<VideoPanelLayout name="main_screenshare_container" content="screenshare">
+						<VideoPanel name="main_screenshare_panel1" width="600" height="300" float="true" textcolor="#FFFFFFFF" bkcolor="0xFF000000"/>
+						<VideoPanel name="main_screenshare_panel2" width="600" height="300" float="true" textcolor="#FFFFFFFF" bkcolor="0xFF000000"/>
+						<VideoPanel name="main_screenshare_panel3" width="600" height="300" float="true" textcolor="#FFFFFFFF" bkcolor="0xFF000000"/>
+						<VideoPanel name="main_screenshare_panel4" width="600" height="300" float="true" textcolor="#FFFFFFFF" bkcolor="0xFF000000"/>
+						<VideoPanel name="main_screenshare_panel5" width="600" height="300" float="true" textcolor="#FFFFFFFF" bkcolor="0xFF000000"/>
+						<VideoPanel name="main_screenshare_panel6" width="600" height="300" float="true" textcolor="#FFFFFFFF" bkcolor="0xFF000000"/>
+					</VideoPanelLayout>
+				</TabLayout>
+
+				<!-- 底部操作栏 -->
+				<HorizontalLayout name="toolbar_layout" height="63" bkcolor="#FFFFFFFF">
+					<Control />
+					<Button name="btn_mic" width="80" tooltip="广播麦克风"  normalimage="file='img\\main_toolbar_mic_normal.png'" hotimage="file='img\\main_toolbar_mic_hover.png'" pushedimage="img\\main_toolbar_mic_selected.png" />
+					<Button name="btn_cam" width="80" tooltip="广播摄像头" normalimage="file='img\\main_toolbar_camera_normal.png'" hotimage="file='img\\main_toolbar_camera_hover.png'" pushedimage="img\\main_toolbar_camera_selected.png" />
+					<Button name="btn_screenshare" width="80" tooltip="屏幕共享" normalimage="file='img\\main_toolbar_screenshare_normal.png'" hotimage="file='img\\main_toolbar_screenshare_hover.png'" pushedimage="img\\video\\main_toolbar_screenshare_selected.png" />
+					<Button name="btn_speaker" width="80" tooltip="调节扬声器音量"  normalimage="file='img\\main_toolbar_speaker_normal.png'" hotimage="file='img\\main_toolbar_speaker_hover.png'" pushedimage="img\\main_toolbar_speaker_selected.png" selectedimage="img\\main_toolbar_speaker_selected.png" />
+					<Button name="btn_record" width="80" tooltip="录制屏幕内容"  normalimage="file='img\\main_toolbar_record_normal.png'" hotimage="file='img\\main_toolbar_record_hover.png'" pushedimage="img\\main_toolbar_record_selected.png" selectedimage="img\\main_toolbar_record_selected.png" />
+					<Button name="btn_CallIn" width="80" tooltip="呼叫他人加入组"  normalimage="file='img\\main_toolbar_call_normal.png'" hotimage="file='img\\main_toolbar_call_hover.png'" pushedimage="img\\main_toolbar_call_selected.png" />
+					<Button name="btn_setting" width="80" tooltip="音视频设置"  normalimage="file='img\\main_toolbar_setting_normal.png'" hotimage="file='img\\main_toolbar_setting_hover.png'" pushedimage="img\\video\\main_toolbar_setting_selected.png" />
+					<Control />
+				</HorizontalLayout>
+			</VerticalLayout>
+
+			<Control width="1" bkcolor="#FFD8D8D8" />
+
+			<VerticalLayout width="300" bkcolor="#FFFFFFFF">
+				<List name="list_users" height="250" padding="6, 6, 6, 6" header="hidden" />
+				<Control height="1" bkcolor="#FFD8D8D8" />
+				<RichEdit name="main_re_msgs" multiline="true" vscrollbar="true" autovscroll="true" enabled="false" rich="true" readonly="true" inset="6, 6, 6, 6" font="3" />
+				<Control height="1" bkcolor="#FFD8D8D8" />
+				<VerticalLayout height="130">
+					<HorizontalLayout height="78">
+						<Label name="main_msg_inputtip"  height="22" width="140" padding="10,6,149,32" text="输入消息" font="3" textcolor="#E3E6E9" />
+						<RichEdit name="main_msg_input" height="78" padding="10,6,10,10" visible="false" font="3"  multiline="true" vscrollbar="true" autovscroll="true" />
+					</HorizontalLayout>
+					<Control height="1" bkcolor="#FFD8D8D8" />
+					<HorizontalLayout height="52">
+						<Combo name="main_msg_selectuser" padding="11,10,0,10" width="160" height="32" text="所有人" textpadding="8,5,22,5" font="2" itemfont="2" textcolor="#454545" itemtextcolor="#454545"  bordersize="1" borderround="5,5" bordercolor="0xAEC8DE" 
+							   normalimage="file='img\\cmb_arrow.png' dest='138,9,152,23'" />
+						<Control width="48" />
+						<Button name="main_msg_send" padding="0,10,0,10" width="65" height="32" align="center" text="发送" textcolor="#FFFFFF" font="3" normalimage="img\\btn_ok_bg.png" borderround="5,5" />
+					</HorizontalLayout>
+				</VerticalLayout>
+			</VerticalLayout>
+		</HorizontalLayout>
+	</VerticalLayout>
+</Window>

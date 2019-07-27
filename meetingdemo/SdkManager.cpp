@@ -1,11 +1,4 @@
-/*##############################################################################
- * ÎÄ¼ş£ºSdkManager.cpp
- * ÃèÊö£ºSDK¹ÜÀíÆ÷ÊµÏÖ£¬Ö÷ÒªÊµÏÖµÇÂ¼Âß¼­£¬¹ÜÀíSDK
- * ×÷Õß£ºTeck
- * Ê±¼ä£º2018Äê5ÔÂ24ÈÕ
- * °æÈ¨£ºCopyright(C) 2018 Fsmeeting.com. All rights reserved.
- ##############################################################################*/
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "SdkManager.h"
 #include "define.h"
 #include "util.h"
@@ -14,75 +7,86 @@
 #include <fstream>
 #include <sstream>
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£º¹¹Ôìº¯Êı
- * ²Î  Êı£ºÎŞ
- * ·µ»ØÖµ£ºÎŞ
-------------------------------------------------------------------------------*/
+
+////////////////////////////////////////////////////////////////////////////////
+
+#define TIMER_REFRESHUSER 1    //ç”¨æˆ·åˆ—è¡¨åˆ·æ–°å®šæ—¶å™¨
+
+#define REFRESHTIME       5000 //ç”¨æˆ·åˆ—è¡¨åˆ·æ–°é—´éš”ä¸º5ç§’
+
+#define DESTROY_WND(WND_PTR)				\
+	if (WND_PTR)							\
+	{										\
+		if (IsWindow(WND_PTR->GetHWND()))	\
+			WND_PTR->Close();				\
+		delete WND_PTR;						\
+		WND_PTR = nullptr;					\
+	}
+
+////////////////////////////////////////////////////////////////////////////////
+
 CSdkManager::CSdkManager()
-	: m_pFspEngin(nullptr)
+	: m_pFspEngine(nullptr)
 	, m_dwAudOpenIndex(INVALID_AUD_INDEX)
 	, m_dwMicOpenIndex(INVALID_MIC_INDEX)
 	, m_dwAudSetVoluem(50)
 	, m_dwMicSetVolume(50)
-	, m_dwResolutionIndex(0)	// Ä¬ÈÏ·Ö±æÂÊ£º320*240
-	, m_dwFrameRate(15)			// Ä¬ÈÏÖ¡ÂÊ£º15Ö¡/Ãë
-	, m_pDuiLoginWnd(nullptr)
-	, m_pDuiLoginWaitWnd(nullptr)
-	, m_pDuiLoginErrorWnd(nullptr)
-	, m_pDuiFrameWnd(nullptr)
-	, m_bRestart(false)
+	, m_dwResolutionIndex(0)	// é»˜è®¤åˆ†è¾¨ç‡ï¼š320*240
+	, m_dwFrameRate(15)			// é»˜è®¤å¸§ç‡ï¼š15å¸§/ç§’
+	, m_pLoginWnd(nullptr)
+	, m_pMeetingMainWnd(nullptr)
+	, m_pUserStateWnd(nullptr)
 {
 	Create(NULL, _T("CSdkManagerMsgWnd"), UI_WNDSTYLE_FRAME, WS_EX_WINDOWEDGE);
 	ShowWindow(false);
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£ºÎö¹¹º¯Êı
- * ²Î  Êı£ºÎŞ
- * ·µ»ØÖµ£ºÎŞ
-------------------------------------------------------------------------------*/
 CSdkManager::~CSdkManager()
 {
+	::KillTimer(m_hWnd,TIMER_REFRESHUSER);
 	Destroy();
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£º¾²Ì¬º¯Êı£¬»ñÈ¡¾²Ì¬ÊµÀı
- * ²Î  Êı£ºÎŞ
- * ·µ»ØÖµ£º¾²Ì¬ÊµÀı
-------------------------------------------------------------------------------*/
+LRESULT CSdkManager::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	if (uMsg == WM_TIMER)
+	{
+		OnTimerEx(wParam);
+		return 0;
+	}
+
+	return __super::HandleMessage(uMsg, wParam, lParam);
+}
+
 CSdkManager& CSdkManager::GetInstance()
 {
 	static CSdkManager mgr;
 	return mgr;
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£º³õÊ¼»¯
- * ²Î  Êı£ºÎŞ
- * ·µ»ØÖµ£º³É¹¦/Ê§°Ü
-------------------------------------------------------------------------------*/
 bool CSdkManager::Init()
 {
-	m_pFspEngin = FspGetEngine();
-	if (m_pFspEngin == nullptr)
+	m_pFspEngine = FspGetEngine();
+	if (m_pFspEngine == nullptr)
 		return false;
+
+	/// åˆå§‹åŒ–å¼•æ“ 
 
 	demo::ClientConfig& config = demo::CConfigParser::GetInstance().GetClientConfig();
 
-	m_FspEnginContext.app_id = config.bUserDefine ? config.strUserAppId.c_str() : config.strAppId.c_str();
+	m_FspEnginContext.app_id = config.bAppUserDefine ? config.strUserAppId.c_str() : config.strAppId.c_str();
 	m_FspEnginContext.log_path = "./";
 	m_FspEnginContext.event_handler = this;
-	m_FspEnginContext.server_addr = config.strServerAddr.c_str();
-	
-	fsp::ErrCode result = m_pFspEngin->Init(m_FspEnginContext);
+	m_FspEnginContext.server_addr = config.bServerUserDefine ? config.strUserServerAddr.c_str() : config.strServerAddr.c_str();
+	 
+	fsp::ErrCode result = m_pFspEngine->Init(m_FspEnginContext);
 	if (result != ERR_OK)
 		return false;
 
-	fsp::IAudioEngine *pAudioEngin = m_pFspEngin->GetAudioEngine();
+	/// è·å–é»˜è®¤éº¦å…‹é£å’Œæ‰¬å£°å™¨å¹¶è®¾ç½®éŸ³é‡
 
-	// »ñÈ¡Ä¬ÈÏÂó¿Ë·çºÍÑïÉùÆ÷²¢ÉèÖÃÒôÁ¿
+	fsp::IAudioEngine *pAudioEngin = m_pFspEngine->GetAudioEngine();
+
 	int nMicIndex = pAudioEngin->GetMicrophoneDevice();
 	if (nMicIndex != -1 && nMicIndex >= 0)
 	{
@@ -97,186 +101,148 @@ bool CSdkManager::Init()
 		pAudioEngin->SetAudioParam(AUDIOPARAM_SPEAKER_VOLUME, m_dwAudSetVoluem);
 	}
 
+	/// è®¾ç½®ä¿¡ä»¤å¤„ç†å›è°ƒ
+
+	m_pFspSignaling = m_pFspEngine->GetFspSignaling();
+	m_pFspSignaling->AddEventHandler(this);
+
+	::SetTimer(m_hWnd, TIMER_REFRESHUSER, REFRESHTIME, NULL);
+
 	return true;
 }
 
 void CSdkManager::Destroy()
 {
 	Close();
-	if (m_pDuiLoginErrorWnd) {
-		if (IsWindow(m_pDuiLoginErrorWnd->GetHWND()))
-			m_pDuiLoginErrorWnd->Close();
-		delete m_pDuiLoginErrorWnd;
-		m_pDuiLoginErrorWnd = nullptr;
-	}
 
-	if (m_pDuiLoginWnd) {
-		if (IsWindow(m_pDuiLoginWnd->GetHWND()))
-			m_pDuiLoginWnd->Close();
-		delete m_pDuiLoginWnd;
-		m_pDuiLoginWnd = nullptr;
-	}
-
-	if (m_pDuiFrameWnd) {
-		if (IsWindow(m_pDuiFrameWnd->GetHWND()))
-			m_pDuiFrameWnd->Close();
-		delete m_pDuiFrameWnd;
-		m_pDuiFrameWnd = nullptr;
-	}
-
-	if (m_pDuiLoginWaitWnd) {
-		if (IsWindow(m_pDuiLoginWaitWnd->GetHWND()))
-			m_pDuiLoginWaitWnd->Close();
-		delete m_pDuiLoginWaitWnd;
-		m_pDuiLoginWaitWnd = nullptr;
-	}
+	DESTROY_WND(m_pLoginWnd);
+	DESTROY_WND(m_pMeetingMainWnd);
 
 	FspReleaseEngine();
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£ºÆô¶¯
- * ²Î  Êı£ºÎŞ
- * ·µ»ØÖµ£ºÎŞ
-------------------------------------------------------------------------------*/
 void CSdkManager::OpenLoginWnd()
 {
-	if (m_pDuiLoginErrorWnd == nullptr) {
-		m_pDuiLoginErrorWnd = new CDuiLoginErrorWnd();
-		m_pDuiLoginErrorWnd->Create(NULL, _T("LoginError"), UI_WNDSTYLE_FRAME, WS_EX_WINDOWEDGE);
-
+	if (m_pLoginWnd == nullptr) {
+		m_pLoginWnd = new CLoginWnd;
+		m_pLoginWnd->Create(NULL, _T("Login"), UI_WNDSTYLE_DIALOG, WS_EX_WINDOWEDGE);
 	}
 
-	if (m_pDuiLoginWnd == nullptr) {
-		m_pDuiLoginWnd = new CDuiLoginWnd;
-		m_pDuiLoginWnd->Create(NULL, _T("Login"), UI_WNDSTYLE_FRAME, WS_EX_WINDOWEDGE);
+	if (m_pMeetingMainWnd == nullptr) {
+		m_pMeetingMainWnd = new CMeetingMainWnd;
+		m_pMeetingMainWnd->Create(NULL, _T("Main"), UI_WNDSTYLE_FRAME, WS_EX_WINDOWEDGE);
+	}
+	if (m_pUserStateWnd == nullptr) {
+		m_pUserStateWnd = new CUserStateWnd();
+		m_pUserStateWnd->Create(NULL, _T("UserState"), UI_WNDSTYLE_DIALOG, WS_EX_WINDOWEDGE);
 	}
 
-	if (m_pDuiFrameWnd == nullptr) {
-		m_pDuiFrameWnd = new CDuiFrameWnd;
-		m_pDuiFrameWnd->Create(NULL, _T("Main"), UI_WNDSTYLE_FRAME, WS_EX_WINDOWEDGE);
-	}
+	m_pMeetingMainWnd->ShowWindow(false);
+	m_pUserStateWnd->ShowWindow(false);
 
-	if (m_pDuiLoginWaitWnd == nullptr) {
-		m_pDuiLoginWaitWnd = new CDuiLoginWaitWnd();
-		m_pDuiLoginWaitWnd->Create(NULL, _T("Logining"), UI_WNDSTYLE_FRAME, WS_EX_WINDOWEDGE);
-	}
-
-	m_pDuiLoginErrorWnd->ShowWindow(false);
-	m_pDuiFrameWnd->ShowWindow(false);
-	m_pDuiLoginWaitWnd->ShowWindow(false);
-
-	m_pDuiLoginWnd->CenterWindow();
-	m_pDuiLoginWnd->ShowWindow(true);
+	m_pLoginWnd->CenterWindow();
+	m_pLoginWnd->ShowWindow(true);
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£ºÉèÖÃÊ¹ÓÃµÄÂó¿Ë·çÉè±¸
- * ²Î  Êı£º[in] dwMicIndex Âó¿Ë·çË÷Òı
- * ·µ»ØÖµ£ºÎŞ
-------------------------------------------------------------------------------*/
+bool CSdkManager::IsLogined()
+{
+	return m_isLogined;
+}
+
+fsp::ErrCode CSdkManager::Login(LPCTSTR szUser)
+{
+	m_strMyUserId = demo::WStr2Utf8(szUser).GetUtf8Str();
+
+	// ç”ŸæˆToken
+	fsp::String strToken = BuildToken(m_strMyUserId).c_str();
+
+	return m_pFspEngine->Login(strToken.c_str(), m_strMyUserId.c_str());
+}
+
+fsp::ErrCode CSdkManager::JoinGroup(LPCTSTR szGroup)
+{
+	m_strMyGroupId = demo::WStr2Utf8(szGroup).GetUtf8Str();
+	m_setMyPublishedVideoIds.clear();
+	return m_pFspEngine->JoinGroup(m_strMyGroupId.c_str());
+}
+
+fsp::ErrCode CSdkManager::LeaveGroup()
+{
+	m_strMyGroupId.clear();
+	m_pMeetingMainWnd->ShowWindow(false);
+	m_pUserStateWnd->ShowGroupLeaved();
+	return m_pFspEngine->LeaveGroup();
+}
+
 void CSdkManager::SetOpenMic(DWORD dwMicIndex)
 {
 	if (dwMicIndex != INVALID_MIC_INDEX)
 	{
 		m_dwMicOpenIndex = dwMicIndex;
-		m_pFspEngin->GetAudioEngine()->SetMicrophoneDevice(dwMicIndex);
+		m_pFspEngine->GetAudioEngine()->SetMicrophoneDevice(dwMicIndex);
 	}
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£º»ñÈ¡Ê¹ÓÃµÄÂó¿Ë·çÉè±¸Ë÷Òı
- * ²Î  Êı£ºÎŞ
- * ·µ»ØÖµ£ºÂó¿Ë·çË÷Òı
-------------------------------------------------------------------------------*/
 DWORD CSdkManager::GetOpenMic()
 {
 	return m_dwMicOpenIndex;
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£ºÉèÖÃÊ¹ÓÃµÄÑïÉùÆ÷Éè±¸
- * ²Î  Êı£º[in] dwAudIndex ÑïÉùÆ÷Ë÷Òı
- * ·µ»ØÖµ£ºÎŞ
-------------------------------------------------------------------------------*/
 void CSdkManager::SetOpenAud(DWORD dwAudIndex)
 {
 	if (dwAudIndex != INVALID_AUD_INDEX)
 	{
 		m_dwAudOpenIndex = dwAudIndex;
-		m_pFspEngin->GetAudioEngine()->SetSpeakerDevice(dwAudIndex);
+		m_pFspEngine->GetAudioEngine()->SetSpeakerDevice(dwAudIndex);
 	}
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£º»ñÈ¡ÑïÉùÆ÷Éè±¸Ë÷Òı
- * ²Î  Êı£ºÎŞ
- * ·µ»ØÖµ£ºÑïÉùÆ÷Ë÷Òı
-------------------------------------------------------------------------------*/
 DWORD CSdkManager::GetOpenAud()
 {
 	return m_dwAudOpenIndex;
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£ºÉèÖÃÂó¿Ë·çÒôÁ¿
- * ²Î  Êı£º[in] dwMicVol ÒôÁ¿
- * ·µ»ØÖµ£ºÎŞ
-------------------------------------------------------------------------------*/
 void CSdkManager::SetMicVol(DWORD dwMicVol)
 {
 	assert(dwMicVol >= 0 && dwMicVol <= 100);
 
-	m_pFspEngin->GetAudioEngine()->SetAudioParam(AUDIOPARAM_MICROPHONE_VOLUME, dwMicVol);
+	m_pFspEngine->GetAudioEngine()->SetAudioParam(AUDIOPARAM_MICROPHONE_VOLUME, dwMicVol);
 
 	m_dwMicSetVolume = dwMicVol;
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£º»ñÈ¡Âó¿Ë·çÒôÁ¿
- * ²Î  Êı£ºÎŞ
- * ·µ»ØÖµ£ºÒôÁ¿
-------------------------------------------------------------------------------*/
 DWORD CSdkManager::GetMicVol()
 {
 	return m_dwMicSetVolume;
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£ºÉèÖÃÑïÉùÆ÷ÒôÁ¿
- * ²Î  Êı£º[in] dwAudVol ÒôÁ¿
- * ·µ»ØÖµ£ºÎŞ
-------------------------------------------------------------------------------*/
 void CSdkManager::SetAudVol(DWORD dwAudVol)
 {
 	assert(dwAudVol >= 0 && dwAudVol <= 100);
 
-	m_pFspEngin->GetAudioEngine()->SetAudioParam(AUDIOPARAM_SPEAKER_VOLUME, dwAudVol);
+	m_pFspEngine->GetAudioEngine()->SetAudioParam(AUDIOPARAM_SPEAKER_VOLUME, dwAudVol);
 
 	m_dwAudSetVoluem = dwAudVol;
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£º»ñÈ¡ÑïÉùÆ÷ÒôÁ¿
- * ²Î  Êı£ºÎŞ
- * ·µ»ØÖµ£ºÒôÁ¿
-------------------------------------------------------------------------------*/
 DWORD CSdkManager::GetAudVol()
 {
 	return m_dwAudSetVoluem;
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£ºÉèÖÃ±¾µØÈ«¾ÖÉãÏñÍ·Ö¡ÂÊ
- * ²Î  Êı£º[in] dwFrameRate Ö¡ÂÊ
- * ·µ»ØÖµ£ºÎŞ
-------------------------------------------------------------------------------*/
 void CSdkManager::SetFrameRate(DWORD dwFrameRate)
 {
 	if (dwFrameRate != m_dwFrameRate)
 	{
 		m_dwFrameRate = dwFrameRate;
-		m_pDuiFrameWnd->PostMessageW(DUILIB_MSG_VIDEO_PARAM_CHANGED, 0, 0);
+		
+		fsp::VideoProfile profile;
+		profile.width = VideoResolutions[m_dwResolutionIndex].dwWidth;
+		profile.height = VideoResolutions[m_dwResolutionIndex].dwHeight;
+		profile.framerate = m_dwFrameRate;
+		for (const auto& videoid : m_setMyPublishedVideoIds) {
+			m_pFspEngine->SetVideoProfile(videoid.c_str(), profile);
+		}
 	}
 }
 
@@ -290,56 +256,48 @@ ScreenShareConfig CSdkManager::GetScreenShareConfig() const
 	return m_screenShareConfig;
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£º»ñÈ¡±¾µØÈ«¾ÖÉãÏñÍ·Ö¡ÂÊ
- * ²Î  Êı£ºÎŞ
- * ·µ»ØÖµ£ºÖ¡ÂÊ
-------------------------------------------------------------------------------*/
 DWORD CSdkManager::GetFrameRate()
 {
 	return m_dwFrameRate;
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£ºÉèÖÃ±¾µØÈ«¾ÖÉãÏñÍ··Ö±æÂÊ
- * ²Î  Êı£º[in] dwResolutionIndex ·Ö±æÂÊË÷Òı£¬¾ßÌå·Ö±æÂÊ¼ûVideoResolution
- * ·µ»ØÖµ£ºÎŞ
-------------------------------------------------------------------------------*/
 void CSdkManager::SetResolution(DWORD dwResolutionIndex)
 {
 	if (dwResolutionIndex != m_dwResolutionIndex)
 	{
 		m_dwResolutionIndex = dwResolutionIndex;
-		m_pDuiFrameWnd->PostMessageW(DUILIB_MSG_VIDEO_PARAM_CHANGED, 0, 0);
+		fsp::VideoProfile profile;
+		profile.width = VideoResolutions[m_dwResolutionIndex].dwWidth;
+		profile.height = VideoResolutions[m_dwResolutionIndex].dwHeight;
+		profile.framerate = m_dwFrameRate;
+		for (const auto& videoid : m_setMyPublishedVideoIds) {
+			m_pFspEngine->SetVideoProfile(videoid.c_str(), profile);
+		}
 	}
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£º»ñÈ¡±¾µØÈ«¾ÖÉãÏñÍ··Ö±æÂÊË÷Òı£¬¾ßÌå·Ö±æÂÊ¼ûVideoResolution
- * ²Î  Êı£ºÎŞ
- * ·µ»ØÖµ£ºÒôÁ¿
-------------------------------------------------------------------------------*/
 DWORD CSdkManager::GetResolution()
 {
 	return m_dwResolutionIndex;
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£ºÉè±¸±ä¸üÊÂ¼ş£¬ÔİÎ´´¦Àí
- * ²Î  Êı£º[in] device_event ÊÂ¼şÀàĞÍ
- * ·µ»ØÖµ£ºÎŞ
-------------------------------------------------------------------------------*/
-void CSdkManager::OnDeviceChange(DeviceEventType device_event)
+fsp::ErrCode CSdkManager::StartPublishVideo(const char* szVideoId, int nCameraId)
 {
-	m_pDuiFrameWnd->PostMessageW(DUILIB_MSG_DEVICECHANGE, 0, 0);
+	m_setMyPublishedVideoIds.insert(szVideoId);
+	return m_pFspEngine->StartPublishVideo(szVideoId, nCameraId);
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£ºSDKÊÂ¼ş»Øµ÷´¦Àí
- * ²Î  Êı£º[in] event_type	ÊÂ¼şÀàĞÍ
- *         [in] err_code	´íÎóÂë
- * ·µ»ØÖµ£ºÎŞ
-------------------------------------------------------------------------------*/
+fsp::ErrCode CSdkManager::StopPublishVideo(const char* szVideoId)
+{
+	m_setMyPublishedVideoIds.erase(szVideoId);
+	return m_pFspEngine->StopPublishVideo(szVideoId);
+}
+
+void CSdkManager::OnDeviceChange(DeviceEventType device_event)
+{
+	m_pMeetingMainWnd->PostMessageW(DUILIB_MSG_DEVICECHANGE, 0, 0);
+}
+
 void CSdkManager::OnEvent(EventType event_type, ErrCode err_code)
 {
 	PostMessage(DUILIB_MSG_FSP_EVENT, event_type, err_code);
@@ -347,13 +305,28 @@ void CSdkManager::OnEvent(EventType event_type, ErrCode err_code)
 
 LRESULT CSdkManager::HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
+	bHandled = TRUE;
 	if (uMsg == DUILIB_MSG_FSP_EVENT) {
 		EventType event_type = (EventType)wParam;
 		ErrCode err_code = (ErrCode)lParam;
 
 		OnFspEvent(event_type, err_code);
-
-		bHandled = TRUE;
+	}else if (uMsg == DUILIB_MSG_USER_REFRESH_FINISH) {
+		//åˆ·æ–°åœ¨çº¿åˆ—è¡¨æ¶ˆæ¯ç»“æœ
+		m_pUserStateWnd->UpdateUserList();
+	}
+	else if (uMsg == DUILIB_MSG_INVITE_COME) {
+		InviteReqInfo* pInviteInfo = (InviteReqInfo*)wParam;
+		m_pUserStateWnd->ShowInviteCome(*pInviteInfo);
+		delete pInviteInfo;
+	}
+	else if (uMsg == DUILIB_MSG_INVITE_RESPONSE) {
+		InviteResponseInfo* pInviteInfo = (InviteResponseInfo*)wParam;
+		m_pMeetingMainWnd->ShowInviteResponse(*pInviteInfo);
+		delete pInviteInfo;
+	}
+	else {
+		bHandled = FALSE;
 	}
 
 	return S_OK;
@@ -361,56 +334,50 @@ LRESULT CSdkManager::HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lParam
 
 void CSdkManager::OnFspEvent(fsp::EventType eventType, fsp::ErrCode result)
 {
-	if (eventType == fsp::EVENT_JOINGROUP_RESULT) {
-		assert(m_pDuiLoginWnd);
-
-		// Òş²ØµÇÂ¼µÈ´ı´°¿Ú
-		m_pDuiLoginWaitWnd->ShowWindow(false);
-
-		if (result == ErrCode::ERR_OK) // µÇÂ¼³É¹¦£¬ÏÔÊ¾Ö÷´°¿Ú
+	if (eventType == fsp::EVENT_LOGIN_RESULT) {
+		if (result == ErrCode::ERR_OK) // ç™»å½•æˆåŠŸï¼Œæ˜¾ç¤ºä¸»çª—å£
 		{
-			m_pDuiLoginWnd->ShowWindow(false);
+			m_isLogined = true;
 
-			m_pDuiFrameWnd->CenterWindow();
-			m_pDuiFrameWnd->ShowWindow(true);
+			m_pLoginWnd->ShowWindow(false);
+
+			m_pUserStateWnd->CenterWindow();
+			m_pUserStateWnd->ShowWindow(true);
+
+			//è¯·æ±‚åœ¨çº¿åˆ—è¡¨
+			fsp::Vector<fsp::String> vecUserIds;
+			unsigned int nRequestId;
+			m_pFspSignaling->UserStatusRefresh(vecUserIds, &nRequestId);
 		}
-		else // µÇÂ¼Ê§°Ü£¬Ìø×ªµ½Ê§°ÜÒ³Ãæ
-		{
-			CDuiString strErrInfo = L"Î´Öª´íÎó:";
-			if (result == ErrCode::ERR_TOKEN_INVALID)
-				strErrInfo = L"ÈÏÖ¤Ê§°Ü£¡";
-			else if (result == ErrCode::ERR_CONNECT_FAIL)
-				strErrInfo = L"Á¬½Ó·şÎñÆ÷Ê§°Ü£¡";
-			else if (result == ErrCode::ERR_APP_NOT_EXIST)
-				strErrInfo = L"Ó¦ÓÃ²»´æÔÚ£¡";
-			else if (result == ErrCode::ERR_USERID_CONFLICT)
-				strErrInfo = L"ÓÃ»§ÒÑµÇÂ¼£¡";
-			else if (result == ErrCode::ERR_NO_BALANCE)
-				strErrInfo = L"ÕË»§Óà¶î²»×ã£¡";
-			else
-			{
-				WCHAR szTmp[8];
-				_snwprintf_s(szTmp, 8, L"%d", result);
-				strErrInfo.Append(szTmp);
-			}
+		else {
+			m_isLogined = false;
 
-			ShowErrorWnd(strErrInfo);
+			m_pLoginWnd->ShowError(BuildErrorInfo(result));
+		}
+	}
+	else if (eventType == fsp::EVENT_JOINGROUP_RESULT) {
+
+		assert(m_pLoginWnd);
+
+		if (result == ErrCode::ERR_OK)
+		{
+			// ç™»å½•æˆåŠŸï¼Œæ˜¾ç¤ºä¸»çª—å£, è°ƒæ•´åœ¨çº¿åˆ—è¡¨çª—å£æ˜¾ç¤º
+			m_pMeetingMainWnd->ShowGroupJoined();
+			m_pUserStateWnd->ShowWindow(false);
+		}
+		else // åŠ å…¥ç»„å¤±è´¥
+		{
+			m_pUserStateWnd->ShowJoinGroupError(BuildErrorInfo(result));
 		}
 	}
 	else if (eventType == fsp::EVENT_CONNECT_LOST){
-		m_pDuiFrameWnd->ResetWindowStatus();
-		//Á¬½Ó¶Ï¿ª£¬ÏÔÊ¾Ê§°Ü´°¿Ú
-		ShowErrorWnd(L"Á¬½Ó¶Ï¿ª");
+		m_pMeetingMainWnd->ResetWindowStatus();
+		//è¿æ¥æ–­å¼€ï¼Œæ˜¾ç¤ºå¤±è´¥çª—å£
+		//@todo
+		//ShowErrorWnd(L"è¿æ¥æ–­å¼€");
 	}
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£ºSDK»Øµ÷Ô¶¶ËÊÓÆµÏà¹ØÊÂ¼ş£¬Ó¦¸Ã·¢ÏûÏ¢µ½UIÏß³Ì´¦Àí
- * ²Î  Êı£º[in] user_id ÓÃ»§ID
- *         [in] video_id ÊÓÆµID
- *         [in] remote_video_event ÊÂ¼şÀàĞÍ
- * ·µ»ØÖµ£ºÎŞ
-------------------------------------------------------------------------------*/
 void CSdkManager::OnRemoteVideoEvent(const String& user_id, const String& video_id, RemoteVideoEventType remote_video_event)
 {
 	RemoteVideoInfo* pInfo = new RemoteVideoInfo;
@@ -419,153 +386,174 @@ void CSdkManager::OnRemoteVideoEvent(const String& user_id, const String& video_
 
 	if (REMOTE_VIDEO_EVENT_PUBLISHE_STARTED == remote_video_event)
 	{
-		m_pDuiFrameWnd->PostMessageW(DUILIB_MSG_ADD_REMOTE_VIDEO, (WPARAM)pInfo, 0);
+		m_pMeetingMainWnd->PostMessageW(DUILIB_MSG_ADD_REMOTE_VIDEO, (WPARAM)pInfo, 0);
 	}
 	else if (REMOTE_VIDEO_EVENT_PUBLISHE_STOPED == remote_video_event)
 	{
-		m_pDuiFrameWnd->PostMessageW(DUILIB_MSG_DEL_REMOTE_VIDEO, (WPARAM)pInfo, 0);
+		m_pMeetingMainWnd->PostMessageW(DUILIB_MSG_DEL_REMOTE_VIDEO, (WPARAM)pInfo, 0);
 	}
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£ºSDK»Øµ÷Ô¶¶ËÒôÆµÏà¹ØÊÂ¼ş£¬Ó¦¸Ã·¢ÏûÏ¢µ½UIÏß³Ì´¦Àí
- * ²Î  Êı£º[in] user_id ÓÃ»§ID
- *         [in] remote_video_event ÊÂ¼şÀàĞÍ
- * ·µ»ØÖµ£ºÎŞ
-------------------------------------------------------------------------------*/
 void CSdkManager::OnRemoteAudioEvent(const String& user_id, RemoteAudioEventType remote_audio_event)
 {
-	if (m_pDuiFrameWnd && IsWindow(m_pDuiFrameWnd->GetHWND())) {
+	if (m_pMeetingMainWnd && IsWindow(m_pMeetingMainWnd->GetHWND())) {
 		RemoteAudioInfo* pInfo = new RemoteAudioInfo;
 		pInfo->strUserId = user_id;
 
 		if (REMOTE_AUDIO_EVENT_PUBLISHE_STARTED == remote_audio_event)
 		{
-			m_pDuiFrameWnd->PostMessageW(DUILIB_MSG_ADD_REMOTE_AUDIO, (WPARAM)pInfo, 0);
+			m_pMeetingMainWnd->PostMessageW(DUILIB_MSG_ADD_REMOTE_AUDIO, (WPARAM)pInfo, 0);
 		}
 		else if (REMTOE_AUDIO_EVENT_PUBLISHE_STOPED == remote_audio_event)
 		{
-			m_pDuiFrameWnd->PostMessageW(DUILIB_MSG_DEL_REMOTE_AUDIO, (WPARAM)pInfo, 0);
+			m_pMeetingMainWnd->PostMessageW(DUILIB_MSG_DEL_REMOTE_AUDIO, (WPARAM)pInfo, 0);
 		}
 	}
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£ºÔ¶³Ì¿ØÖÆÊÂ¼ş
- * ²Î  Êı£º[in] user_id  	    ÓÃ»§ID
- *         [in] operation_type	ÀàĞÍ
- * ·µ»ØÖµ£ºToken
-------------------------------------------------------------------------------*/
+void CSdkManager::OnGroupUsersRefreshed(const fsp::Vector<fsp::String>& user_ids)
+{
+	m_pMeetingMainWnd->InitUserList(user_ids);
+}
+
+void CSdkManager::OnRemoteUserEvent(const char* szRemoteUserId, fsp::RemoteUserEventType remote_user_eventType)
+{
+	if (m_pMeetingMainWnd && IsWindow(m_pMeetingMainWnd->GetHWND())) {
+		RemoteUserEventInfo* pInfo = new RemoteUserEventInfo;
+		pInfo->remote_userid = szRemoteUserId;
+
+		if (REMOTE_USER_EVENT_GROUP_JOINED == remote_user_eventType)
+		{
+			m_pMeetingMainWnd->PostMessageW(DUILIB_MSG_REMOTE_ADD_USER, (WPARAM)pInfo, 0);
+		}
+		else if (REMOTE_USER_EVENT_GROUP_LEAVED == remote_user_eventType)
+		{
+			m_pMeetingMainWnd->PostMessageW(DUILIB_MSG_REMOTE_DEL_USER, (WPARAM)pInfo, 0);
+		}
+	}
+}
+
 void CSdkManager::OnRemoteControlOperationEvent(const String& user_id,
 	fsp::RemoteControlOperationType operation_type)
 {
 	RemoteControlInfo* pInfo = new RemoteControlInfo;
 	pInfo->strUserId = user_id;
 	pInfo->operationType = operation_type;
-	m_pDuiFrameWnd->PostMessage(DUILIB_MSG_REMOTECONTROL_EVENT, (WPARAM)pInfo, 0);
+	m_pMeetingMainWnd->PostMessage(DUILIB_MSG_REMOTECONTROL_EVENT, (WPARAM)pInfo, 0);
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£ºÉú³ÉToken£¬¿¼ÂÇµ½°²È«ĞÔ£¬½¨Òé½«TokenÉú³É´úÂë¼¯³Éµ½·şÎñÆ÷
- * ²Î  Êı£º[in] szGroupId	·Ö×éID
- *         [in] szUserId	ÓÃ»§ID
- * ·µ»ØÖµ£ºToken
-------------------------------------------------------------------------------*/
-std::string CSdkManager::BuildToken(char* szGroupId, char* szUserId)
+void CSdkManager::OnUsersStateRefreshed(fsp::ErrCode errCode, unsigned int nRequestId, const fsp::Vector<fsp::UserInfo> users)
+{
+	m_vecUsers = users;
+	PostMessage(DUILIB_MSG_USER_REFRESH_FINISH);
+}
+
+void CSdkManager::OnInviteCome(const char* szInviterUserId,
+	unsigned int nInviteId, const char* szGroupId, const char* szMsg)
+{
+	InviteReqInfo* pInfo = new InviteReqInfo();
+	pInfo->strInviterUserId = szInviterUserId;
+	pInfo->strGroupId = szGroupId;
+	pInfo->strMsg = szMsg;
+	pInfo->nInviteId = nInviteId;
+
+	PostMessage(DUILIB_MSG_INVITE_COME, (WPARAM)pInfo, 0);
+}
+
+void CSdkManager::OnInviteAccepted(const char* szRemoteUserId, unsigned int nInviteId)
+{
+	InviteResponseInfo* pInfo = new InviteResponseInfo();
+	pInfo->strRemoteUserId = szRemoteUserId;
+	pInfo->nInviteId = nInviteId;
+	pInfo->isAccept = true;
+
+	PostMessage(DUILIB_MSG_INVITE_RESPONSE, (WPARAM)pInfo, 0);
+}
+
+void CSdkManager::OnInviteRejected(const char* szRemoteUserId, unsigned int nInviteId)
+{
+	InviteResponseInfo* pInfo = new InviteResponseInfo();
+	pInfo->strRemoteUserId = szRemoteUserId;
+	pInfo->nInviteId = nInviteId;
+	pInfo->isAccept = false;
+
+	PostMessage(DUILIB_MSG_INVITE_RESPONSE, (WPARAM)pInfo, 0);
+}
+
+void CSdkManager::OnUserMsgCome(const char * szSenderUserId, unsigned int nMsgId, const char * szMsg)
+{
+	m_pMeetingMainWnd->OnAppendMsg(szSenderUserId,szMsg);
+}
+
+void CSdkManager::OnGroupMsgCome(const char * szSenderUserId, unsigned int nMsgId, const char * szMsg)
+{
+	m_pMeetingMainWnd->OnAppendMsg(szSenderUserId, szMsg, true);
+}
+
+CDuiString CSdkManager::BuildErrorInfo(fsp::ErrCode errCode)
+{
+	CDuiString strErrInfo = L"æœªçŸ¥é”™è¯¯:";
+	if (errCode == ErrCode::ERR_TOKEN_INVALID)
+		strErrInfo = L"è®¤è¯å¤±è´¥ï¼";
+	else if (errCode == ErrCode::ERR_CONNECT_FAIL)
+		strErrInfo = L"è¿æ¥æœåŠ¡å™¨å¤±è´¥ï¼";
+	else if (errCode == ErrCode::ERR_APP_NOT_EXIST)
+		strErrInfo = L"åº”ç”¨ä¸å­˜åœ¨ï¼";
+	else if (errCode == ErrCode::ERR_USERID_CONFLICT)
+		strErrInfo = L"ç”¨æˆ·å·²ç™»å½•ï¼";
+	else if (errCode == ErrCode::ERR_NO_BALANCE)
+		strErrInfo = L"è´¦æˆ·ä½™é¢ä¸è¶³ï¼";
+	else
+	{
+		WCHAR szTmp[8];
+		_snwprintf_s(szTmp, 8, L"%d", errCode);
+		strErrInfo.Append(szTmp);
+	}
+
+	return strErrInfo;
+}
+
+LRESULT CSdkManager::OnTimerEx(UINT uMsg)
+{
+	if (uMsg == TIMER_REFRESHUSER)
+	{
+		fsp::Vector<fsp::String> vecUserIds;
+		unsigned int nRequestId;
+		m_pFspEngine->GetFspSignaling()->UserStatusRefresh(vecUserIds, &nRequestId);
+	}
+	return LRESULT();
+}
+
+std::string CSdkManager::BuildToken(const std::string& struserId)
 {
 	demo::ClientConfig& config = demo::CConfigParser::GetInstance().GetClientConfig();
 	
-	fsp::tools::AccessToken token(config.bUserDefine ? config.strUserAppSecret : config.strAppSecret);
-	token.app_id		= config.bUserDefine ? config.strUserAppId : config.strAppId;
-	token.group_id		= szGroupId;
-	token.user_id		= szUserId;
+	fsp::tools::AccessToken token(config.bAppUserDefine ? config.strUserAppSecret : config.strAppSecret);
+	token.app_id		= config.bAppUserDefine ? config.strUserAppId : config.strAppId;
+	token.user_id		= struserId;
 	token.expire_time	= 0;
 
 	return token.Build();
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£º¼ÓÈë·Ö×é´¦Àí
- * ²Î  Êı£º[in] szGroup	·Ö×éID
- *         [in] szUser	ÓÃ»§ID
- * ·µ»ØÖµ£ºÎŞ
-------------------------------------------------------------------------------*/
-void CSdkManager::JoinGroup(LPCTSTR szGroup, LPCTSTR szUser)
+const std::string& CSdkManager::GetLoginGroupId()
 {
-	// ±£´æÆğÀ´£¬Ö÷´°¿Ú±êÌâÀ¸ĞèÒªÏÔÊ¾´ËĞÅÏ¢
-	m_strGroup	= szGroup;
-	m_strUser	= szUser;
-
-	char szGroupId[32];
-	char szUserId[32];
-	demo::ConvertUnicodeToUtf8(szGroup, szGroupId, 32);
-	demo::ConvertUnicodeToUtf8(szUser, szUserId, 32);
-
-	// Éú³ÉToken
-	fsp::String strToken = BuildToken(szGroupId, szUserId).c_str();
-
-	// ¼ÓÈë·Ö×é
-	if (fsp::ERR_OK != m_pFspEngin->JoinGroup(strToken, szGroupId, szUserId))
-		return;
-
-	// Òş²ØµÇÂ¼´°¿Ú
-	m_pDuiLoginWnd->ShowWindow(false);
-
-	// ÏÔÊ¾µÇÂ¼µÈ´ı´°¿Ú
-	m_pDuiLoginWaitWnd->CenterWindow();
-	m_pDuiLoginWaitWnd->ShowWindow(true);
+	return m_strMyGroupId;
 }
 
-/*------------------------------------------------------------------------------
- * Ãè  Êö£ºÉèÖÃ·Ö×éID
- * ²Î  Êı£º[in] szGroup
- * ·µ»ØÖµ£ºÎŞ
-------------------------------------------------------------------------------*/
-void CSdkManager::SetLoginGroup(LPCTSTR szGroup)
+const std::string CSdkManager::GetLoginUserId()
 {
-	m_strGroup = szGroup;
-}
-
-/*------------------------------------------------------------------------------
- * Ãè  Êö£º»ñÈ¡·Ö×éID
- * ²Î  Êı£ºÎŞ
- * ·µ»ØÖµ£º·Ö×éID
-------------------------------------------------------------------------------*/
-const CDuiString& CSdkManager::GetLoginGroup()
-{
-	return m_strGroup;
-}
-
-/*------------------------------------------------------------------------------
- * Ãè  Êö£ºÉèÖÃÓÃ»§ID
- * ²Î  Êı£º[in] szUser ÓÃ»§ID
- * ·µ»ØÖµ£ºÎŞ
-------------------------------------------------------------------------------*/
-void CSdkManager::SetLoginUser(LPCTSTR szUser)
-{
-	m_strUser = szUser; 
-}
-
-/*------------------------------------------------------------------------------
- * Ãè  Êö£º»ñÈ¡ÓÃ»§ID
- * ²Î  Êı£ºÎŞ
- * ·µ»ØÖµ£ºÓÃ»§ID
-------------------------------------------------------------------------------*/
-const CDuiString& CSdkManager::GetLoginUser()
-{
-	return m_strUser;
+	return m_strMyUserId;
 }
 
 void CSdkManager::ShowErrorWnd(const CDuiString& strErrInfo)
 {
-	//ÏÈÒş²ØÖ÷´°¿Ú
-	if (m_pDuiFrameWnd) {
-		m_pDuiFrameWnd->ShowWindow(false);
+	//å…ˆéšè—ä¸»çª—å£
+	if (m_pMeetingMainWnd) {
+		m_pMeetingMainWnd->ShowWindow(false);
 	}
 
-	m_pDuiLoginErrorWnd->UpdateErrInfo(strErrInfo);
-	m_pDuiLoginErrorWnd->CenterWindow();
-	m_pDuiLoginErrorWnd->ShowWindow(true);
+	//@todo
 }
 
 CDuiString CSdkManager::GetSkinFolder()

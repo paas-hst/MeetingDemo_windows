@@ -66,4 +66,72 @@ inline void ShowMessageBox(HWND hParent, LPCTSTR szText)
 	pMB->CenterWindow();
 	pMB->ShowModal();
 }
+
+class WStr2Utf8
+{
+public:
+	WStr2Utf8(const WCHAR* wsz_str)
+	{
+		m_str = NULL;
+		if (wsz_str) {
+			DWORD nLen = 0;
+
+			nLen = WideCharToMultiByte(CP_UTF8, 0, wsz_str, -1, NULL, 0, NULL, NULL);
+			m_str = new char[nLen + 8];
+			memset(m_str, 0, nLen + 8);
+
+			nLen = WideCharToMultiByte(CP_UTF8, 0, wsz_str, -1, m_str, nLen + 8, NULL, NULL);
+		}
+	}
+
+	~WStr2Utf8()
+	{
+		if (m_str) {
+			delete[] m_str;
+		}
+	}
+
+	const char* GetUtf8Str() const
+	{
+		return m_str;
+	}
+
+private:
+	char* m_str;
+};
+
+
+class Utf82WStr
+{
+public:
+	Utf82WStr(const char* szStr)
+	{
+		m_wstr = NULL;
+		if (szStr) {
+			DWORD nLen = 0;
+			nLen = MultiByteToWideChar(CP_UTF8, 0, szStr, -1, NULL, 0);
+			
+			m_wstr = new WCHAR[nLen + 8];
+			memset(m_wstr, 0, nLen + 8);
+
+			nLen = MultiByteToWideChar(CP_UTF8, 0, szStr, -1, m_wstr, nLen);
+		}
+	}
+
+	~Utf82WStr()
+	{
+		if (m_wstr) {
+			delete[] m_wstr;
+		}
+	}
+
+	const WCHAR* GetWStr() const
+	{
+		return m_wstr;
+	}
+
+private:
+	WCHAR* m_wstr;
+};
+
 }

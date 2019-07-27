@@ -876,7 +876,7 @@ void CMenuWnd::ResizeMenu()
 
 	SIZE szInit = m_pm.GetInitSize();
 	CDuiRect rc;
-	CPoint point = m_BasedPoint;
+	CDuiPoint point = m_BasedPoint;
 	rc.left = point.x;
 	rc.top = point.y;
 	rc.right = rc.left + szInit.cx;

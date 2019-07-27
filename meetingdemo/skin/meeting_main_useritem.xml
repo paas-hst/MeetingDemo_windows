@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window size="240,24"> 
+	<Font id="0" name="微软雅黑" size="14" bold="false" default="true" />
+    <ListContainerElement  name="user_state_item" height="28" minheight="28" inset="0, 2, 0, 2">
+        <HorizontalLayout>
+            <Control width="11" />
+
+            <VerticalLayout width="24">
+                <Control />
+                <Control width="24" height="24" bkimage="img\\user_portrait.png"/>
+                <Control />
+            </VerticalLayout>
+
+			<Control width="13" />
+			
+            <Label name="label_userid" width="110" text="156" textcolor="FF6B6B6B" align="left" />
+             
+            <Control width="4" />
+            <Control name="icon_user_audio" width="24" bkimage="img\\main_user_audio_closed.png"/>
+            <Control width="14" />
+            <Control name="icon_user_video" width="24" bkimage="img\\main_user_video_closed.png"/>
+            <Control width="14" />
+            <Control name="icon_user_screenshare" width="24" bkimage="img\\main_user_screenshare_closed.png"/>
+
+        </HorizontalLayout>
+    </ListContainerElement>
+</Window>

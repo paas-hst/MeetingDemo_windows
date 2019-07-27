@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window size="240,38"> 
+    <ListContainerElement  name="user_state_item" height="38" minheight="38">
+        <HorizontalLayout>
+            <Control width="4" />
+            <VerticalLayout width="28">
+                <Control />
+                <CheckBox name="check_user_select"  width="14" height="14" normalimage="img\\checkbox_normal.png" selectedimage="img\\checkbox_selected.png" />
+                <Control />
+            </VerticalLayout>
+
+            <VerticalLayout width="32">
+                <Control />
+                <Control width="32" height="32" bkimage="img\\user_portrait.png"/>
+                <Control />
+            </VerticalLayout>
+
+            <Label name="label_userid" text="136" textcolor="FF6B6B6B" align="left"/>
+            <Control width="4" />
+            <VerticalLayout width="10">
+                <Control />
+                <Control width="8" height="8" bkcolor="#FF5DDE7D" borderround="6, 6"/>
+                <Control />
+            </VerticalLayout>
+
+            <Label name="label_user_state" width="36" text="在线" textcolor="#FF454545" align="left"/>
+            
+        </HorizontalLayout>
+    </ListContainerElement>
+</Window>

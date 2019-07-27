@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window size="720,480" caption="0,0,0,30" maxinfo="640,400">
+	<Font id="0" name="微软雅黑" size="14" bold="false" default="true" />
+	<Font id="1" name="微软雅黑" size="32" bold="false" />
+	<Font id="2" name="微软雅黑" size="10" bold="false" />
+	<Font id="3" name="微软雅黑" size="12" bold="false" />
+	<VerticalLayout bkcolor="#FF575E86" bkcolor2="#FF2C304E" width="640" heigth="400">
+		<!-- 顶部标题栏 -->
+		<HorizontalLayout height="30" >
+			<Label name="login_logo" width="20" height="20" bkimage="img\\login\\titlebar_logo.png" padding="8,8,0,0" />
+			<Label name="login_caption" text="好视通云通信" textcolor="#FFFFFFFF" height="30" padding="8,4,0,0" />
+			<Control />
+			<Button name="app_config_btn" tooltip="应用配置"  width="16" padding="0,7,16,7" normalimage="img\\login\\titlebar_setting_normal.png" hotimage="img\\login\\titlebar_setting_hover.png" pushedimage="img\\login\\titlebar_setting_normal.png"/>
+			<Button name="minbtn" tooltip="最小化" width="16" padding="0,7,16,7" normalimage="img\\login\\titlebar_mini.png" hotimage="img\\login\\titlebar_mini_hot.png" pushedimage="img\\login\\titlebar_mini_press.png"/>
+			<Button name="closebtn" tooltip="关闭" width="16" padding="0,7,16,7" normalimage="img\\login\\titlebar_close.png" hotimage="img\\login\\titlebar_close_hot.png" pushedimage="img\\login\\titlebar_close_press.png"/>
+		</HorizontalLayout>
+		
+		<Control height="62" />
+		<Label name="login_label" height="45" width="64" padding="328,0,328,0" font="1" text="登录" textcolor="0xFFFFFFFF" align="center" />
+		
+		<Control height="69" />	
+		<RichEdit name="user_name_edit" bkcolor="#FF5E627D" textcolor="0xFFFFFFFF" width="480" height="50"  padding="120,0" inset="10,10,0,0" wanttab="false" rich="false" multiline="false" textpadding="20,5" tipvalue="请输入User ID" tipvaluecolor="#FF989898" tooltip="请输入User ID" />
+
+		<Control height="20" />	
+		<Button name="login_btn" width="480" height="100"  padding="120,0" bkimage="img\\login\\login_btn.png"/>
+
+		<GifAnim name="login_waiting" height="40" width="40" padding="340, 10, 340, 0" bkimage="img\\login\\login_waiting.gif" visible="false" enabled="false"/>
+
+		<Label name="login_errorinfo" text="组名或用户名错误！" textcolor="0xFFFFFFFF" align="center" visible="false"/>
+	
+		<Control />
+	
+		<HorizontalLayout height="14" width="1000" padding="0, 0, 0, 4" >
+			<Label name="login_sdkver" font="2" text="" textcolor="0xFFACB4CC" align="center"/>
+		</HorizontalLayout>
+		
+		<HorizontalLayout height="14" width="1000" padding="0, 0, 0, 4" >
+			<Label font="2" text="Copyright 2013-2018 hst.com. All Rights Reserved." textcolor="0xFFACB4CC" align="center"/>
+		</HorizontalLayout>
+		
+		<HorizontalLayout height="14" width="1000" padding="0, 0, 0, 15" >
+			<Label font="2" text="深圳银澎云计算有限公司" textcolor="0xFFACB4CC" align="center"/>
+		</HorizontalLayout>
+
+	</VerticalLayout>
+
+</Window>

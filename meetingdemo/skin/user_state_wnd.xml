@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window size="300,500" caption="0,0,0,30" >
+	<Font id="0" name="微软雅黑" size="14" bold="false" default="true" />
+	<Font id="1" name="微软雅黑" size="30" bold="false" />
+	<Font id="2" name="微软雅黑" size="9" bold="false" />
+	<Default name="VScrollBar" value="width=&quot;6&quot; thumbnormalimage=&quot;img\\scrollbar_thumb.png&quot;" />
+	<VerticalLayout >
+		<!-- 顶部标题栏 -->
+		<HorizontalLayout height="36" bkcolor="0XFF2C304E">
+			<Label width="20" height="20" bkimage="img\\login\\titlebar_logo.png" padding="11, 8, 11, 8" />
+			<Label text="在线" textcolor="#FFFFFFFF" height="20" padding="0,8,0,8" />
+			<Button name="minbtn" tooltip="最小化" height="14" width="14" padding="0,11,10,11" normalimage="img\\login\\titlebar_mini.png" hotimage="img\\login\\titlebar_mini_hot.png" pushedimage="img\\login\\titlebar_mini_press.png"/>
+			<Button name="closebtn" tooltip="关闭" height="14" width="14" padding="0,11,10,11" normalimage="img\\login\\titlebar_close.png" hotimage="img\\login\\titlebar_close_hot.png" pushedimage="img\\login\\titlebar_close_press.png"/>
+			<Control width="2" />
+		</HorizontalLayout>
+
+		<VerticalLayout bkcolor="#FFFFFFFF">
+			<Edit name="edit_finduser"  width="240" height="30" padding="25,20,10,0" textpadding="10,4,10,4"  wanttab="false"  multiline="false"  
+				  tipvaluecolor="#FF989898" tooltip="搜索用户" normalimage="img\\user_find_KillFocus.png" focusedimage="img\\user_find_SetFocus.png" nativebkcolor="#FFF1F4F9"/>
+				
+			<List name="list_users" width="240" padding="25, 6, 1, 6" header="hidden" vscrollbar="true" />
+			
+			<Control name="line_list_invite" height="1" bkcolor="#FFD8D8D8" />
+
+			<VerticalLayout name="User_stat_jornGroup" height="148">
+				<RichEdit name="edit_groupid" width="260"  height="36"  padding="20, 20, 10, 10" inset="0, 2, 0, 2" wanttab="false" rich="false" multiline="false" textpadding="20,6" tipvalue="请输入Group ID" tipvaluecolor="#FF989898" tooltip="请输入Group ID" bkcolor="#FFF1F4F9"/>
+				<Button name="btn_joingroup" width="260" height="40" text="加入分组" padding="20, 15, 20, 5" textcolor="0XFFFFFFFF" normalimage="img\\join_group.png" hotimage="img\\join_group_hot.png" pushedimage="img\\join_group_pressed.png" />
+			</VerticalLayout>
+				 
+			<VerticalLayout name="user_stat_CallIn" height="80" visible="false">
+				<Control />
+				<HorizontalLayout height="32">
+					<Option name="btn_selectAll" width="14" height="14" padding="25,9"  normalimage="img\\checkbox_normal.png" selectedimage="img\\checkbox_selected.png"/>
+					<Label width="80" height="16" text="全选" align="left" padding="20,8"/>
+					<Button name="btn_online_callIn" enabled="false" width="120" height="32" padding="10,0" text="呼叫" textcolor="#FFFFFFFF" normalimage="file='img\\btn_ok_bg.png', corner='8,8,8,8'" />
+				</HorizontalLayout>
+				<Control />
+			</VerticalLayout>
+		</VerticalLayout>
+
+	</VerticalLayout>
+</Window>

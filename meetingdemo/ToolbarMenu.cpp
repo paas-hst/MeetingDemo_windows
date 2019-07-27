@@ -19,10 +19,6 @@ CToolbarMenu::CToolbarMenu(HWND hParent, CPaintManagerUI* pPaintManager, INotify
 	, m_pPaintManager(pPaintManager)
 	, m_pNotifyReceiver(pNotifyReceiver)
 {
-	m_szLabelNormlImg = L"img\\video\\checkbox.png";
-	m_szLabelHotImg = L"img\\video\\checkbox_hot.png";
-	m_szLabelPressedImg = L"img\\video\\checkbox_pressed.png";
-	m_szLabelSelectedImg = L"img\\video\\checkbox_sel.png";
 }
 
 /*------------------------------------------------------------------------------
@@ -93,36 +89,16 @@ CMenuElementUI* CToolbarMenu::ConstructMenuItem(const MenuItem& item)
 	WCHAR szTmp[32];
 
 	CMenuElementUI* pElement = new CMenuElementUI;
-	pElement->SetName(item.szName);
+	pElement->SetName(item.szLabelName);
+	pElement->SetText(item.szText);
 	pElement->SetAttribute(L"width", _itow(m_dwMenuItemWidth, szTmp, 10));
 	pElement->SetAttribute(L"height", _itow(m_dwMenuItemHeight, szTmp, 10));
 
-	CHorizontalLayoutUI* pHLayout = new CHorizontalLayoutUI;
-	pHLayout->SetAttribute(L"inset", L"10,10,10,10");
-	pHLayout->SetAttribute(L"width", _itow(m_dwMenuItemWidth, szTmp, 10));
-	pHLayout->SetAttribute(L"height", _itow(m_dwMenuItemHeight, szTmp, 10));
-	
-	COptionUI* pSelectOpt = new COptionUI;
-	pSelectOpt->SetName(item.szLabelName);
-	pSelectOpt->SetAttribute(L"height", _itow(16, szTmp, 10));
-	pSelectOpt->SetAttribute(L"width", _itow(16, szTmp, 10));
-	if (item.enType == MENU_ITEM_TYPE_RADIO)
-		pSelectOpt->SetAttribute(L"group", item.szLabelGroup);
-	pSelectOpt->SetAttribute(L"normalimage", m_szLabelNormlImg);
-	pSelectOpt->SetAttribute(L"hotimage", m_szLabelHotImg);
-	pSelectOpt->SetAttribute(L"pushedimage", m_szLabelPressedImg);
-	pSelectOpt->SetAttribute(L"selectedimage", m_szLabelSelectedImg);
-	pSelectOpt->SetAttribute(L"selected", item.bSelected ? L"true" : L"false");
-	pHLayout->Add(pSelectOpt);
-
-	CLabelUI* pTextLabel = new CLabelUI;
-	pTextLabel->SetAttribute(L"height", _itow(m_dwMenuItemHeight, szTmp, 10));
-	pTextLabel->SetAttribute(L"width", _itow(m_dwMenuTextWidth, szTmp, 10));
-	pTextLabel->SetText(item.szText);
-	pTextLabel->SetAttribute(L"padding", L"8,0,0,0");
-	pHLayout->Add(pTextLabel);
-
-	pElement->Add(pHLayout);
+	if (item.bSelected) {
+		pElement->SetBkImage(L"file='img\\checkbox_selected.png' dest='4,10,20,26'");
+	} else {
+		pElement->SetBkImage(L"file='img\\checkbox_normal.png' dest='4,10,20,26'");
+	}
 
 	return pElement;
 }
@@ -158,7 +134,7 @@ void CToolbarMenu::ShowMenu(POINT ptAlignPoint)
 	if (pMenu == NULL)
 		return;
 
-	pMenu->Init(NULL, NULL, L"toolbar_menu.xml", _T("xml"), ptAlignPoint);
+	pMenu->Init(NULL, NULL, L"popup_menu.xml", _T("xml"), ptAlignPoint);
 
 	// 动态添加菜单项
 	ConstructMenu(pMenu, m_menuItems);

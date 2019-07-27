@@ -1,21 +1,23 @@
-/*##############################################################################
- * ÎÄ¼ş£ºdefine.h
- * ÃèÊö£º¹«¹²ÉùÃ÷ºÍ¶¨Òå
- * ×÷Õß£ºTeck
- * Ê±¼ä£º2018Äê5ÔÂ24ÈÕ
- * °æÈ¨£ºCopyright(C) 2018 Fsmeeting.com. All rights reserved.
+ï»¿/*##############################################################################
+ * æ–‡ä»¶ï¼šdefine.h
+ * æè¿°ï¼šå…¬å…±å£°æ˜å’Œå®šä¹‰
+ * ä½œè€…ï¼šTeck
+ * æ—¶é—´ï¼š2018å¹´5æœˆ24æ—¥
+ * ç‰ˆæƒï¼šCopyright(C) 2018 Fsmeeting.com. All rights reserved.
  ##############################################################################*/
 #pragma once
 
+#include <string>
+
 #include "fsp_engine.h"
 
-// ÎŞĞ§Öµ¶¨Òå
+// æ— æ•ˆå€¼å®šä¹‰
 #define INVALID_MIC_INDEX					0xFFFFFFFF
 #define INVALID_AUD_INDEX					0xFFFFFFFF
 #define INVALID_CAM_INDEX					0xFFFFFFFF
 #define INVALID_VOLUME						0xFFFFFFFF
 
-// ÄÚ²¿×Ô¶¨ÒåÏûÏ¢
+// å†…éƒ¨è‡ªå®šä¹‰æ¶ˆæ¯
 #define DUILIB_MSG_SET_MIC_DEV				WM_USER + 101
 #define DUILIB_MSG_SET_AUD_DEV				WM_USER + 102
 #define DUILIB_MSG_SET_MIC_VOL				WM_USER + 103
@@ -28,21 +30,27 @@
 #define DUILIB_MSG_BROADCAST_CAM_CHANGED	WM_USER + 110
 #define DUILIB_MSG_CHANGE_CAM_FAILED		WM_USER + 111
 #define	DUILIB_MSG_BROADCAST_CAM_FAILED		WM_USER + 112
-#define	DUILIB_MSG_VIDEO_PARAM_CHANGED		WM_USER + 113
 #define DUILIB_MSG_CONNECT_LOST             WM_USER + 114
 #define DUILIB_MSG_FSP_EVENT				WM_USER + 115
 #define DUILIB_MSG_REMOTECONTROL_EVENT      WM_USER + 116
 #define DUILIB_MSG_DEVICECHANGE             WM_USER + 117
+#define DUILIB_MSG_USER_REFRESH_FINISH      WM_USER + 118
+#define DUILIB_MSG_INVITE_COME              WM_USER + 119
+#define DUILIB_MSG_INVITE_RESPONSE          WM_USER + 120
+#define DUILIB_MSG_RECIVE_CAHTMSG           WM_USER + 121
+#define DUILIB_MSG_REMOTE_ADD_USER          WM_USER + 123
+#define DUILIB_MSG_REMOTE_DEL_USER          WM_USER + 124
 
-// µÇÂ¼½á¹û
+// ç™»å½•ç»“æœ
 #define LOGIN_SUCCESS		1
 #define LOGIN_FAILED		0
 
-// ¶¨Ê±Æ÷
-#define UPDATE_VIDEO_INFO_TIMER_ID			100
-#define UPDATE_VIDEO_INFO_INTERVAL			200	// ms
-#define UPDATE_SETTING_INFO_TIMER_ID		101
-#define UPDATE_SETTING_INFO_INTERVAL		200	// ms
+// å®šæ—¶å™¨
+#define UPDATE_VIDEO_INFO_TIMER_ID			99
+#define UPDATE_VIDEO_INFO_INTERVAL			1000	// ms
+
+#define UPDATE_SETTING_INFO_TIMER_ID			100
+#define UPDATE_SETTING_INFO_INTERVAL			200	// ms
 
 // UI
 #define UI_VIDEO_INFO_HEIGHT				30
@@ -54,10 +62,10 @@
 #define UI_MAIN_FRAME_TITLE_HEIGHT			30
 #define UI_MAIN_FRAME_TOOLBAR_HEIGHT		90
 
-// ×Ö·û´®
-#define STRING_TOO_MANY_CAM					L"×î¶àÔÊĞí¹ã²¥2¸öÊÓÆµÉè±¸£¡"
-#define STRING_CHANGE_CAM_FAILED			L"ÇĞ»»ÉãÏñÍ·Ê§°Ü£¬¿ÉÄÜ·¢ÉúÁËÏµÍ³´íÎó»òÕß´ıÇĞ»»µÄÉãÏñÍ·ÒÑ¾­ÔÚÊ¹ÓÃÖĞ£¡"
-#define STRING_BROADCAST_CAM_FAILED			L"¹ã²¥ÉãÏñÍ·Ê§°Ü£¡"
+// å­—ç¬¦ä¸²
+#define STRING_TOO_MANY_CAM					L"æœ€å¤šå…è®¸å¹¿æ’­2ä¸ªè§†é¢‘è®¾å¤‡ï¼"
+#define STRING_CHANGE_CAM_FAILED			L"åˆ‡æ¢æ‘„åƒå¤´å¤±è´¥ï¼Œå¯èƒ½å‘ç”Ÿäº†ç³»ç»Ÿé”™è¯¯æˆ–è€…å¾…åˆ‡æ¢çš„æ‘„åƒå¤´å·²ç»åœ¨ä½¿ç”¨ä¸­ï¼"
+#define STRING_BROADCAST_CAM_FAILED			L"å¹¿æ’­æ‘„åƒå¤´å¤±è´¥ï¼"
 
 struct VideoResolution
 {
@@ -74,7 +82,7 @@ static VideoResolution VideoResolutions[] =
 	{1920, 1080}
 };
 
-// ÏûÏ¢½á¹¹Ìå
+// æ¶ˆæ¯ç»“æ„ä½“
 struct RemoteVideoInfo
 {
 	fsp::String strUserId;
@@ -108,6 +116,33 @@ struct ScreenShareConfig
 		right = 0;
 		bottom = 0;
 	}
+};
+
+struct InviteReqInfo
+{
+	std::string strInviterUserId;
+	std::string strGroupId;
+	std::string strMsg;
+	unsigned int nInviteId;
+};
+
+struct InviteResponseInfo
+{
+	std::string strRemoteUserId;
+	unsigned int nInviteId;
+	bool isAccept;
+};
+
+struct MsgReciveInfo
+{
+	std::string srcuserid;
+	std::string msg;
+	bool bGroup;
+};
+
+struct RemoteUserEventInfo
+{
+	std::string remote_userid;
 };
 
 struct IEventCallback

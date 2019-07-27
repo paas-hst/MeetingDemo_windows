@@ -112,50 +112,44 @@ copy /Y duilib\bin\DuiLib_u.dll $(TargetDir)</Command>
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DuiAppConfigWnd.h" />
+    <ClInclude Include="aes.h" />
+    <ClInclude Include="AppConfigWnd.h" />
     <ClInclude Include="ConfigParser.h" />
     <ClInclude Include="define.h" />
-    <ClInclude Include="DisplayVideoWnd.h" />
-    <ClInclude Include="DuiFrameWnd.h" />
-    <ClInclude Include="DuiLoginErrorWnd.h" />
-    <ClInclude Include="DuiLoginWaitWnd.h" />
-    <ClInclude Include="DuiLoginWnd.h" />
-    <ClInclude Include="DuiSettingWnd.h" />
-    <ClInclude Include="FloatWnd.h" />
-    <ClInclude Include="meetingdemo.h" />
     <ClInclude Include="fsp_token.h" />
-    <ClInclude Include="MediaInfoWnd.h" />
+    <ClInclude Include="fsp_tools.h" />
+    <ClInclude Include="LoginWnd.h" />
+    <ClInclude Include="MeetingMainWnd.h" />
     <ClInclude Include="MessageBox.h" />
     <ClInclude Include="observer_impl_base.hpp" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SdkManager.h" />
+    <ClInclude Include="SettingWnd.h" />
+    <ClInclude Include="SpeakerSettingWnd.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="tinyxml2.h" />
     <ClInclude Include="ToolbarMenu.h" />
     <ClInclude Include="UICrack.h" />
     <ClInclude Include="UIMenu.h" />
+    <ClInclude Include="UIVideoPanel.h" />
+    <ClInclude Include="UIVideoPanelLayout.h" />
+    <ClInclude Include="UserStateWnd.h" />
     <ClInclude Include="util.h" />
-    <ClInclude Include="VideoWnd.h" />
-    <ClInclude Include="VideoWndMgr.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aes.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="DuiAppConfigWnd.cpp" />
+    <ClCompile Include="AppConfigWnd.cpp" />
     <ClCompile Include="ConfigParser.cpp" />
-    <ClCompile Include="DisplayVideoWnd.cpp" />
-    <ClCompile Include="DuiFrameWnd.cpp" />
-    <ClCompile Include="DuiLoginErrorWnd.cpp" />
-    <ClCompile Include="DuiLoginWaitWnd.cpp" />
-    <ClCompile Include="DuiLoginWnd.cpp" />
-    <ClCompile Include="DuiSettingWnd.cpp" />
-    <ClCompile Include="FloatWnd.cpp" />
-    <ClCompile Include="meetingdemo.cpp" />
-    <ClCompile Include="MediaInfoWnd.cpp" />
+    <ClCompile Include="LoginWnd.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="MeetingMainWnd.cpp" />
     <ClCompile Include="MessageBox.cpp" />
     <ClCompile Include="SdkManager.cpp" />
+    <ClCompile Include="SettingWnd.cpp" />
+    <ClCompile Include="SpeakerSettingWnd.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -164,8 +158,9 @@ copy /Y duilib\bin\DuiLib_u.dll $(TargetDir)</Command>
     <ClCompile Include="ToolbarMenu.cpp" />
     <ClCompile Include="UICrack.cpp" />
     <ClCompile Include="UIMenu.cpp" />
-    <ClCompile Include="VideoWnd.cpp" />
-    <ClCompile Include="VideoWndMgr.cpp" />
+    <ClCompile Include="UIVideoPanel.cpp" />
+    <ClCompile Include="UIVideoPanelLayout.cpp" />
+    <ClCompile Include="UserStateWnd.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="meetingdemo.rc" />

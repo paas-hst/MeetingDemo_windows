@@ -63,10 +63,6 @@ private:
 	};
 
 private:
-	DWORD GetTopMenuHeight();
-	MenuItem* FindMenuItem(Menu* pMenu, LPCTSTR szMenuItemName);
-	void AddMenuItem(Menu* pMenu, LPCTSTR szMenuItemName, MenuItemType enMenuType, bool hasSubMenu);
-	void ConstructMenu(CMenuElementUI* pParent, const std::list<MenuItem>& items);
 	void ConstructMenu(CMenuWnd* pMenu, const std::list<MenuItem>& items);
 	CMenuElementUI* ConstructMenuItem(const MenuItem& item);
 
@@ -79,10 +75,7 @@ private:
 	DWORD m_dwMenuItemHeight;
 	DWORD m_dwMenuLabelWidth;
 	DWORD m_dwMenuTextWidth;
-	CDuiString	m_szLabelNormlImg;
-	CDuiString	m_szLabelHotImg;
-	CDuiString	m_szLabelPressedImg;
-	CDuiString	m_szLabelSelectedImg;
+	
 	std::list<MenuItem> m_menuItems;
 };
 

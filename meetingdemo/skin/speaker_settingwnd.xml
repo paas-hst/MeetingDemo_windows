@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window size="80, 160">
+	<VerticalLayout bkimage="img\\speaker_wnd_bk.png">
+		<Slider name="speakervalue_slider" width="20" height="110" padding="30,17" hor="false" bkimage="img\\slider_speaker_bg.png" thumbsize="20,8" thumbimage="img\\slider_speaker_thumb.png" foreimage="img\\slider_speaker_fore.png" />
+	</VerticalLayout>
+</Window>

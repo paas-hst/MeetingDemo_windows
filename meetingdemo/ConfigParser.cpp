@@ -1,9 +1,9 @@
-/*##############################################################################
- * ÎÄ¼þ£ºConfigParser.cpp
- * ÃèÊö£ºÅäÖÃÎÄ¼þ½âÎöÆ÷ÊµÏÖ
- * ×÷Õß£ºTeck
- * Ê±¼ä£º2018Äê5ÔÂ24ÈÕ
- * °æÈ¨£ºCopyright(C) 2018 Fsmeeting.com. All rights reserved.
+ï»¿/*##############################################################################
+ * æ–‡ä»¶ï¼šConfigParser.cpp
+ * æè¿°ï¼šé…ç½®æ–‡ä»¶è§£æžå™¨å®žçŽ°
+ * ä½œè€…ï¼šTeck
+ * æ—¶é—´ï¼š2018å¹´5æœˆ24æ—¥
+ * ç‰ˆæƒï¼šCopyright(C) 2018 Fsmeeting.com. All rights reserved.
  ##############################################################################*/
 #include "stdafx.h"
 #include "ConfigParser.h"
@@ -37,9 +37,9 @@ TCHAR* GetModulePath(HMODULE hModule)
 }
 
 /*------------------------------------------------------------------------------
- * Ãè  Êö£º¾²Ì¬·½·¨£¬»ñÈ¡¾²Ì¬ÊµÀý
- * ²Î  Êý£ºÎÞ
- * ·µ»ØÖµ£ºÅäÖÃ½âÎöÆ÷ÊµÀýÒýÓÃ
+ * æ  è¿°ï¼šé™æ€æ–¹æ³•ï¼ŒèŽ·å–é™æ€å®žä¾‹
+ * å‚  æ•°ï¼šæ— 
+ * è¿”å›žå€¼ï¼šé…ç½®è§£æžå™¨å®žä¾‹å¼•ç”¨
  ------------------------------------------------------------------------------*/
 CConfigParser& CConfigParser::GetInstance()
 {
@@ -48,21 +48,24 @@ CConfigParser& CConfigParser::GetInstance()
 }
 
 /*------------------------------------------------------------------------------
- * Ãè  Êö£º³õÊ¼»¯
- * ²Î  Êý£ºÎÞ
- * ·µ»ØÖµ£º³É¹¦/Ê§°Ü
+ * æ  è¿°ï¼šåˆå§‹åŒ–
+ * å‚  æ•°ï¼šæ— 
+ * è¿”å›žå€¼ï¼šæˆåŠŸ/å¤±è´¥
  ------------------------------------------------------------------------------*/
 bool CConfigParser::Init()
 {
 	WCHAR* module_path = GetModulePath(NULL);
 
 	USES_CONVERSION;
-	m_config_file = T2A(module_path) + std::string("appinfo.xml");
+	m_ConfigFile = T2A(module_path) + std::string("appinfo.xml");
 
 	tinyxml2::XMLDocument doc;
-	doc.LoadFile(m_config_file.c_str());
+	doc.LoadFile(m_ConfigFile.c_str());
 	if (doc.ErrorID() != 0)
 		return false;
+
+	// AppUserDefine
+	m_ClientConfig.bAppUserDefine = doc.FirstChildElement("AppUserDefine")->BoolText();
 
 	// AppId
 	const char* szAppId = doc.FirstChildElement("AppId")->GetText();
@@ -78,17 +81,6 @@ bool CConfigParser::Init()
 	else
 		m_ClientConfig.strAppSecret = szAppSecret;
 
-	// ServerAddr£¬¿ÉÒÔÎª¿Õ
-	tinyxml2::XMLElement* serverAddrElement = doc.FirstChildElement("ServerAddr");
-	const char* szServerAddr = serverAddrElement ? serverAddrElement->GetText() : "";
-	if (!szServerAddr)
-		m_ClientConfig.strServerAddr = "";
-	else
-		m_ClientConfig.strServerAddr = szServerAddr;
-
-	// UserDefine
-	m_ClientConfig.bUserDefine = doc.FirstChildElement("UserDefine")->BoolText();
-
 	// UserAppId
 	const char* szUserAppId = doc.FirstChildElement("UserAppId")->GetText();
 	if (!szUserAppId)
@@ -103,6 +95,30 @@ bool CConfigParser::Init()
 	else
 		m_ClientConfig.strUserAppSecret = szUserAppSecret;
 
+	////////////////////////////////////////////////////////////////////////////
+
+	// ServerUserDefine
+	m_ClientConfig.bServerUserDefine = doc.FirstChildElement("ServerUserDefine")->BoolText();
+
+	// ServerAddr
+	tinyxml2::XMLElement* elementServerAddr = doc.FirstChildElement("ServerAddr");	
+	if (elementServerAddr) {
+		const char* szServerAddr = elementServerAddr->GetText();
+		if (!szServerAddr)
+			m_ClientConfig.strServerAddr = "";
+		else
+			m_ClientConfig.strServerAddr = szServerAddr;
+	}	
+
+	// UserServerAddr
+	if (m_ClientConfig.bServerUserDefine && doc.FirstChildElement("UserServerAddr") != NULL) {
+		const char* szUserServerAddr = doc.FirstChildElement("UserServerAddr")->GetText();
+		if (!szUserServerAddr)
+			m_ClientConfig.strUserServerAddr = "";
+		else
+			m_ClientConfig.strUserServerAddr = szUserServerAddr;
+	}
+
 	return true;
 }
 
@@ -110,6 +126,13 @@ void CConfigParser::Serialize()
 {
 	tinyxml2::XMLDocument doc;
 	doc.Parse("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>");
+
+	tinyxml2::XMLComment* pUserAppComment = doc.NewComment("Whether use user-defined app");
+	doc.LinkEndChild(pUserAppComment);
+
+	tinyxml2::XMLElement* pAppUserDefine = doc.NewElement("AppUserDefine");
+	pAppUserDefine->SetText(m_ClientConfig.bAppUserDefine ? "true" : "false");
+	doc.LinkEndChild(pAppUserDefine);
 
 	tinyxml2::XMLComment* pAppIdComment = doc.NewComment("Default app ID");
 	doc.LinkEndChild(pAppIdComment);
@@ -124,13 +147,6 @@ void CConfigParser::Serialize()
 	tinyxml2::XMLElement* pAppSecret = doc.NewElement("AppSecret");
 	pAppSecret->SetText(m_ClientConfig.strAppSecret.c_str());
 	doc.LinkEndChild(pAppSecret);
-
-	tinyxml2::XMLComment* pUserAppComment = doc.NewComment("Whether use user-defined app info");
-	doc.LinkEndChild(pUserAppComment);
-
-	tinyxml2::XMLElement* pUserDefine = doc.NewElement("UserDefine");
-	pUserDefine->SetText(m_ClientConfig.bUserDefine ? "true" : "false");
-	doc.LinkEndChild(pUserDefine);
 	
 	tinyxml2::XMLComment* pUserAppIdComment = doc.NewComment("User-defined app ID");
 	doc.LinkEndChild(pUserAppIdComment);
@@ -146,15 +162,28 @@ void CConfigParser::Serialize()
 	pUserAppSecret->SetText(m_ClientConfig.strUserAppSecret.c_str());
 	doc.LinkEndChild(pUserAppSecret);
 
-	if (!m_ClientConfig.strServerAddr.empty()) 
-	{
-		tinyxml2::XMLComment* pServerAddrComment = doc.NewComment("Access service address");
-		doc.LinkEndChild(pServerAddrComment);
+	///////////////////////////////////////////////////////////////////////////////
 
-		tinyxml2::XMLElement* pServerAddr = doc.NewElement("ServerAddr");
-		pServerAddr->SetText(m_ClientConfig.strServerAddr.c_str());
-		doc.LinkEndChild(pServerAddr);
-	}
+	tinyxml2::XMLComment* pUserServerComment = doc.NewComment("Whether use user-defined server");
+	doc.LinkEndChild(pUserServerComment);
 
-	doc.SaveFile(m_config_file.c_str());
+	tinyxml2::XMLElement* pServerUserDefine = doc.NewElement("ServerUserDefine");
+	pServerUserDefine->SetText(m_ClientConfig.bServerUserDefine ? "true" : "false");
+	doc.LinkEndChild(pServerUserDefine);
+
+	tinyxml2::XMLComment* pServerAddrComment = doc.NewComment("Access service address");
+	doc.LinkEndChild(pServerAddrComment);
+
+	tinyxml2::XMLElement* pServerAddr = doc.NewElement("ServerAddr");
+	pServerAddr->SetText(m_ClientConfig.strServerAddr.c_str());
+	doc.LinkEndChild(pServerAddr);
+
+	tinyxml2::XMLComment* pUserServerAddrComment = doc.NewComment("User-defined access service address");
+	doc.LinkEndChild(pUserServerAddrComment);
+
+	tinyxml2::XMLElement* pUserServerAddr = doc.NewElement("UserServerAddr");
+	pUserServerAddr->SetText(m_ClientConfig.strUserServerAddr.c_str());
+	doc.LinkEndChild(pUserServerAddr);
+
+	doc.SaveFile(m_ConfigFile.c_str());
 }

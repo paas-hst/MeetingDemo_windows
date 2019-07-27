@@ -8,6 +8,7 @@
 #include "fsp_common.h"
 #include "fsp_string.h"
 #include "fsp_vector.h"
+#include "fsp_signaling.h"
 
 namespace fsp {
 
@@ -17,99 +18,90 @@ static const int AUDIOPARAM_VALUE_ENABLE = 1;  ///<某个音频参数开启
 static const int AUDIOPARAM_VALUE_DISABLE = 0; ///<某个音频参数关闭
 
 
-//官方保留的videoid, 代表特定类型的广播，广播时不能取这些值。
+/**
+ * @brief 官方保留的videoid, 代表特定类型的广播，广播时不能取这些值。
+ */
 static const char* RESERVED_VIDEOID_SCREENSHARE = "reserved_videoid_screenshare";
 
-/**
- * @brief 错误码集合
- */
-enum ErrCode {
-  ERR_OK = 0, ///<成功
-
-  ERR_INVALID_ARG = 1,      ///<非法参数
-  ERR_INVALID_STATE = 2,    ///<非法状态
-  ERR_OUTOF_MEMORY = 3,     ///<内存不足
-  ERR_DEVICE_FAIL = 4,      ///<访问设备失败
-
-  ERR_CONNECT_FAIL = 30,     ///<网络连接失败
-  ERR_NO_GROUP = 31,         ///<没加入组
-  ERR_TOKEN_INVALID = 32,    ///<认证失败
-  ERR_APP_NOT_EXIST = 33,    ///<app不存在，或者app被删除
-  ERR_USERID_CONFLICT = 34,  ///<相同userid已经加入同一个组，无法再加入
-
-  ERR_NO_BALANCE = 70,         ///<账户余额不足
-  ERR_NO_VIDEO_PRIVILEGE = 71, ///<没有视频权限
-  ERR_NO_AUDIO_PRIVILEGE = 72, ///<没有音频权限
-
-  ERR_NO_SCREEN_SHARE = 73,    ///<当前没有屏幕共享
-
-  ERR_RECVING_SCREEN_SHARE = 74,   ///<当前正在接收屏幕共享
-
-  ERR_SERVER_ERROR = 301,	    ///服务内部错误
-  ERR_FAIL = 302              ///<操作失败
-};
 
 /**
  * @brief 音频参数key
  */
 enum AudioParamKey {
-  AUDIOPARAM_SPEAKER_VOLUME = 1,    ///<扬声器音量 取值 0-100
-  AUDIOPARAM_MICROPHONE_VOLUME = 2, ///<麦克风音量 取值 0-100
-  AUDIOPARAM_SPEAKER_MUTE =
-      3, ///<扬声器静音 取值 AUDIOPARAM_VALUE_ENABLE 或 AUDIOPARAM_VALUE_DISABLE
-  AUDIOPARAM_MICROPHONE_MUTE =
-      4, ///<麦克风静音 取值 AUDIOPARAM_VALUE_ENABLE 或 AUDIOPARAM_VALUE_DISABLE
-  AUDIOPARAM_SPEAKER_ENERGY = 5,   ///<扬声器能量值，只读 取0-100
-  AUDIOPARAM_MICROPHONE_ENERGY = 6 ///<麦克风能量值, 只读 取0-100
+	AUDIOPARAM_SPEAKER_VOLUME = 1,    ///<扬声器音量 取值 0-100
+	AUDIOPARAM_MICROPHONE_VOLUME = 2, ///<麦克风音量 取值 0-100
+	AUDIOPARAM_SPEAKER_MUTE = 3, ///<扬声器静音 取值 AUDIOPARAM_VALUE_ENABLE 或 AUDIOPARAM_VALUE_DISABLE
+	AUDIOPARAM_MICROPHONE_MUTE = 4, ///<麦克风静音 取值 AUDIOPARAM_VALUE_ENABLE 或 AUDIOPARAM_VALUE_DISABLE
+	AUDIOPARAM_SPEAKER_ENERGY = 5,   ///<扬声器能量值，只读 取0-100
+	AUDIOPARAM_MICROPHONE_ENERGY = 6 ///<麦克风能量值, 只读 取0-100
 };
 
 /**
  * @brief IFspEngineEventHandler.OnEvent回调的事件类型
  */
 enum EventType {
-  EVENT_JOINGROUP_RESULT = 0, ///<加入组结果
-  EVENT_CONNECT_LOST = 1,     ///<与fsp服务的连接断开，应用层需要去重新加入组
-  EVENT_RECONNECT_START = 2   ///<网络断开过，开始重连
+	EVENT_JOINGROUP_RESULT = 0,   ///<加入组结果
+	EVENT_CONNECT_LOST = 1,       ///<与fsp服务的连接断开，应用层需要去重新加入组
+	EVENT_RECONNECT_START = 2,    ///<网络断开过，开始重连
+	EVENT_LOGIN_RESULT = 3        ///<登录结果
 };
 
 /**
  * @brief IFspEngineEventHandler.OnDeviceChange回调的事件类型
  */
 enum DeviceEventType {
-  DEVICEEVENT_CAMERA_ADDED = 1,      ///<新插入了摄像头设备
-  DEVICEEVENT_CAMERA_REMOVED = 2,    ///<拔掉了摄像头设备
-  DEVICEEVENT_SPEAKER_ADDED = 3,     ///<新插入了扬声器设备
-  DEVICEEVENT_SPEAKER_REMOVED = 4,   ///<拔掉了扬声器设备
-  DEVICEEVENT_MICROPHONE_ADDED = 5,  ///<新插入了麦克风设备
-  DEVICEEVENT_MICROPHONE_REMOVED = 6 ///<拔掉了麦克风设备
+	DEVICEEVENT_CAMERA_ADDED = 1,      ///<新插入了摄像头设备
+	DEVICEEVENT_CAMERA_REMOVED = 2,    ///<拔掉了摄像头设备
+	DEVICEEVENT_SPEAKER_ADDED = 3,     ///<新插入了扬声器设备
+	DEVICEEVENT_SPEAKER_REMOVED = 4,   ///<拔掉了扬声器设备
+	DEVICEEVENT_MICROPHONE_ADDED = 5,  ///<新插入了麦克风设备
+	DEVICEEVENT_MICROPHONE_REMOVED = 6 ///<拔掉了麦克风设备
 };
 
 /**
  * @brief IFspEngineEventHandler.OnRemoteAudioEvent回调的事件类型
  */
 enum RemoteAudioEventType {
-  REMOTE_AUDIO_EVENT_PUBLISHE_STARTED = 0, ///<远端广播了音频
-  REMTOE_AUDIO_EVENT_PUBLISHE_STOPED = 1   ///<远端停止广播音频
+	REMOTE_AUDIO_EVENT_PUBLISHE_STARTED = 0, ///<远端广播了音频
+	REMTOE_AUDIO_EVENT_PUBLISHE_STOPED = 1   ///<远端停止广播音频
 };
 
 /**
  * @brief 视频显示缩放模式
  */
 enum RenderMode {
-  RENDERMODE_SCALE_FILL = 1, ///<缩放平铺
-  RENDERMODE_CROP_FILL = 2,  ///<等比裁剪显示
-  RENDERMODE_FIT_CENTER = 3  ///<等比居中显示
+	RENDERMODE_SCALE_FILL = 1, ///<缩放平铺
+	RENDERMODE_CROP_FILL = 2,  ///<等比裁剪显示
+	RENDERMODE_FIT_CENTER = 3  ///<等比居中显示
 };
 
 /**
  * @brief IFspEngineEventHandler.OnRemoteVideoEvent回调的事件类型
  */
 enum RemoteVideoEventType {
-  REMOTE_VIDEO_EVENT_PUBLISHE_STARTED = 0, ///<远端广播了一路视频
-  REMOTE_VIDEO_EVENT_PUBLISHE_STOPED = 1,  ///<远端视频停止广播
-  REMOTE_VIDEO_EVENT_FIRST_RENDERED = 2 ///<远端视频第一次显示,加载完成的事件
+	REMOTE_VIDEO_EVENT_PUBLISHE_STARTED = 0, ///<远端广播了一路视频
+	REMOTE_VIDEO_EVENT_PUBLISHE_STOPED = 1,  ///<远端视频停止广播
+	REMOTE_VIDEO_EVENT_FIRST_RENDERED = 2 ///<远端视频第一次显示,加载完成的事件
 };
 
+/**
+ * @brief IVideoFrameObserver回调的裸数据中VideoFrame的类型
+ */
+enum VideoFrameType{
+	VIDEO_FRAME_UNKOWN = 0,			///<暂不支持的格式
+	VIDEO_FRAME_I420 = 1,
+	VIDEO_FRAME_YV12 = 2,
+	VIDEO_FRAME_NV12 = 3,
+	VIDEO_FRAME_NV21 = 4
+};
+
+/**
+ * @brief IAUDIOFrameObserver回调的裸数据中AudioFrame的类型
+ */
+enum AudioFrameType {
+	AUDIO_FRAME_UNKOWN = 0,			///<暂不支持的格式
+	AUDIO_FRAME_PCM16 = 1,			///<16位PCM数据
+};
 
 //前置声明
 class IFspEngineEventHandler;
@@ -118,60 +110,58 @@ class IFspEngineEventHandler;
  * @brief sdk初始化时需要的信息
  */
 struct FspEngineContext {
-  IFspEngineEventHandler *event_handler; ///<外部实现的事件回调对象
-  String app_id;						///< appid 由fsp平台分配的应用id
-  String log_path;						///<日志目录，如果不填，默认程序所在目录
-  String server_addr;					///<服务地址，ip或域名加端口， 格式： "127.0.0.1:50002"，
+	IFspEngineEventHandler *event_handler; ///<外部实现的事件回调对象
+	String app_id;						///< appid 由fsp平台分配的应用id
+	String log_path;					///<日志目录，如果不填，默认程序所在目录
+	String server_addr;					///<服务地址，ip或域名加端口， 格式： "127.0.0.1:50002"，
 										///<如果不填，默认使用好视通的 paas
-  bool auto_recv_audio;					///<是否自动接收远端音频
-  bool auto_play_audio;					///<是否自动播放远端音频
+	bool auto_open_remote_audio;		///<是否自动接听远端音频
 
-  FspEngineContext() 
-	  : event_handler(NULL)
-	  , app_id("")
-	  , log_path("./")
-	  , server_addr("")
-	  , auto_recv_audio(true)
-	  , auto_play_audio(true)
-  {}
+	FspEngineContext()
+		: event_handler(NULL)
+		, app_id("")
+		, log_path("./")
+		, server_addr("")
+		, auto_open_remote_audio(true)
+	{}
 };
 
 /**
  * @brief 音频设备信息
  */
 struct AudioDeviceInfo {
-  int device_id;      ///<设备唯一id，支持热拔插
-  String device_name; ///<设备名
+	int device_id;      ///<设备唯一id，支持热拔插
+	String device_name; ///<设备名
 };
 
 /**
  * @brief 视频设备信息
  */
 struct VideoDeviceInfo {
-  int camera_id;      ///<设备唯一id，支持热拔插
-  String device_name; ///<设备名
+	int camera_id;      ///<设备唯一id，支持热拔插
+	String device_name; ///<设备名
 };
 
 /**
  * @brief 远端视频统计信息
  */
 struct VideoStatsInfo {
-  int width;     ///<图像宽度，像素
-  int height;    ///<图像高度，像素
-  int framerate; ///<帧率
-  int bitrate;   ///<码率
+	int width;     ///<图像宽度，像素
+	int height;    ///<图像高度，像素
+	int framerate; ///<帧率
+	int bitrate;   ///<码率
 
-  VideoStatsInfo() {
-    width = 0;
-    height = 0;
-    framerate = 0;
-    bitrate = 0;
-  }
+	VideoStatsInfo() {
+		width = 0;
+		height = 0;
+		framerate = 0;
+		bitrate = 0;
+	}
 };
 
 /**
  * @brief 视频profile, 当设备或网络不支持时，会取最接近最大值的那个值
- * 
+ *
  * 常见宽高：320x240, 640x360, 640x480, 1280x720, 1920x1080；
  * 常见帧率： 1, 7, 10, 15, 24, 30
  */
@@ -189,6 +179,51 @@ struct VideoProfile
 };
 
 /**
+ * @brief IVideoFrameObserver回调中的视频数据
+ *
+ * 
+ * 常见type： 裸数据类型  NV12 NV21  I420等等
+ */
+struct VideoFrame 
+{
+	VideoFrameType type;	///<裸数据类型
+	int width;				///<视频宽
+	int height;				///<视频高
+	void* data;		///<数据指针
+	unsigned int len_data;	///<数据长度
+
+	VideoFrame() {
+		type = VIDEO_FRAME_UNKOWN;
+		width = 0;
+		height = 0;
+		data = NULL;
+		len_data = 0;
+	}
+};
+
+/**
+ * @brief IAUDIOFrameObserver回调中的音频数据
+ *
+ *
+ * 常见type： 裸数据类型  一般为PCM
+ */
+struct AudioFrame    
+{
+	AudioFrameType type;
+	int channels;		///<通道数，单双通道
+	int SamplesPerSec;	///<采样率samplerate
+	void* data;		    ///<数据指针
+	unsigned int len_data;
+	AudioFrame() {
+		type = AUDIO_FRAME_UNKOWN;
+		channels = 0;		
+		SamplesPerSec = 0;	
+		data = NULL;
+		len_data = 0;
+	}
+};
+
+/**
  * @brief 屏幕共享质量偏好设置
  */
 enum ScreenShareQualityBias
@@ -198,7 +233,7 @@ enum ScreenShareQualityBias
 };
 
 /**
- * 远程控制操作
+ * @brief 远程控制操作
  */
 enum RemoteControlOperationType
 {
@@ -206,6 +241,16 @@ enum RemoteControlOperationType
 	REMOTE_CONTROL_CANCEL = 1,  ///<查看端取消远程控制桌面
 	REMOTE_CONTROL_ACCEPT = 2,  ///<广播端同意远程控制请求
 	REMOTE_CONTROL_REJECT = 3   ///<广播端拒绝远程控制请求
+};
+
+/**
+ * @brief 远端用户的事件类型
+ */
+enum RemoteUserEventType
+{
+	REMOTE_USER_EVENT_GROUP_JOINED = 0, ///<用户加入了组事件
+	REMOTE_USER_EVENT_GROUP_LEAVED      ///<用户离开了组事件
+
 };
 
 /**
@@ -325,8 +370,67 @@ public:
   virtual void OnRemoteControlOperationEvent(const String& user_id,
 	  RemoteControlOperationType operation_type) = 0;
 
+  /**
+   * @brief 刚加入组时，一般回调这个事件，通知组内已经存在的users
+   * @param user_ids 组内所有用户userid列表
+   */
+  virtual void OnGroupUsersRefreshed(const Vector<String>& user_ids) = 0;
+
+  /**
+   * @brief 组成员变化事件
+   * @param szRemoteUserId 对应的成员userid
+   * @param 事件类型
+   */
+  virtual void OnRemoteUserEvent(const char* szRemoteUserId, RemoteUserEventType eventType) = 0;
+
 };
 
+/**
+ * @brief 视频数据回调
+ * 
+ * @上层实现该接口并通过IFspEngine::registerCaptureVideoFrameObserver设置给sdk
+ */
+class IVideoFrameObserver {
+public:
+  /**
+   * @brief 本地视频数据回调
+   * @param videoFrame 视频帧数据
+   */
+  virtual void OnLocalVideoFrame(int nCameraId, const VideoFrame& videoFrame) = 0;
+
+  /**
+   * @brief 远端视频数据回调
+   */
+  virtual bool OnRemoteVideoFrame(const char* szRemoteUserId, const char* szRemoteVideoId, const VideoFrame& videoFrame) = 0;
+};
+
+
+/**
+* @brief 音频观测器对象，裸数据回调接口
+*
+* @上层实现该接口并通过IFspEngine::registerAudioFrameObserver设置给sdk
+*/
+class IAudioFrameObserver {
+public:
+  /**
+  * @brief 获得本地录制的声音
+  * @param AudioFrame 音频帧数据
+  */
+  virtual bool OnCaptureAudioFrame(const AudioFrame& audioFrame) = 0;
+
+  /**
+  * @brief 远端所有人的声音
+  * @param AudioFrame 音频帧数据
+  */
+  virtual bool OnPlayAudioFrame(const AudioFrame &audioFrame) = 0;
+
+  /**
+  * @brief 本地说话和远端说话混合后得的声音
+  * @param AudioFrame 音频帧数据
+  */
+  virtual bool OnMixedAudioFrame(AudioFrame &audioFrame) = 0;
+
+};
 
 /**
  * @brief sdk对外核心接口
@@ -347,14 +451,31 @@ public:
   virtual String GetVersion() = 0;
 
   /**
-   * @brief 加入组
+   * @brief 登录
    * @param fsp_token 访问fsp的令牌,令牌的获取参考fsp鉴权
-   * @param group_id 登录组的id
+   * @param user_id 自身的userid，userid限制：长度不超过128，只能是字母、数字、下划线(_), 横杠(-)
    * @return 结果错误码
-   * @param user_id 自身的userid
    */
-  virtual ErrCode JoinGroup(const String &fsp_token, const String &group_id,
-                            const String &user_id) = 0;
+  virtual ErrCode Login(const String &fsp_token, const String &user_id) = 0;
+
+  /**
+   * @breif 退出登录
+   * @return 结果错误码
+   */
+  virtual ErrCode Logout() = 0;
+
+  /**
+   * @brief 获取 业务信令IFspSignaling对象
+   * @return 返回的指针是 IFspEngine对象持有，外部不要去delete
+   */
+  virtual IFspSignaling* GetFspSignaling() = 0;
+
+  /**
+   * @brief 加入组,需要Login后才能加入组
+   * @param group_id 登录组的id, 限制：长度不超过128，只能是字母、数字、下划线(_), 横杠(-)
+   * @return 结果错误码
+   */
+  virtual ErrCode JoinGroup(const String &group_id) = 0;
 
   /**
    * @brief 退出组
@@ -422,6 +543,26 @@ public:
    */
   virtual ErrCode GetVideoStats(const String &user_id, const String &video_id,
 	  VideoStatsInfo *stats) = 0;
+
+  /**
+  * @brief 注册本地视频观测器对象，即注册回调，当需要引擎给出 onCaptureVideoFrame 或 onRenderVideoFrame 回调时
+  * @param observer接口对象实例。如果传入 NULL，则取消注册
+  */
+  virtual ErrCode RegisterCaptureVideoFrameObserver(int camera_id, IVideoFrameObserver *observer) = 0;
+
+  /**
+  * @brief 注册远端视频观测器对象，即注册回调，当需要引擎给出 onCaptureVideoFrame 或 onRenderVideoFrame 回调时
+  * @param user_id 哪个用户
+  * @param video_id 哪路视频的video id
+  * @param observer接口对象实例。如果传入 NULL，则取消注册
+  */
+  virtual ErrCode RegisterRenderVideoFrameObserver(const String& user_id, const String &video_id, IVideoFrameObserver *observer) = 0;
+  
+  /**
+  * @brief 注册语音观测器对象，即注册回调，当需要引擎给出 onRecordAudioFrame 或 onPlaybackAudioFrame 回调时
+  * @param observer接口对象实例。如果传入 NULL，则取消注册
+  */
+  virtual ErrCode RegisterAudioFrameObserver(IAudioFrameObserver *observer) = 0;
 
   /**
    * @brief 开始广播音频
