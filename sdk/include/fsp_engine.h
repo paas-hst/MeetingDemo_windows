@@ -43,7 +43,9 @@ enum EventType {
 	EVENT_JOINGROUP_RESULT = 0,   ///<加入组结果
 	EVENT_CONNECT_LOST = 1,       ///<与fsp服务的连接断开，应用层需要去重新加入组
 	EVENT_RECONNECT_START = 2,    ///<网络断开过，开始重连
-	EVENT_LOGIN_RESULT = 3        ///<登录结果
+	EVENT_LOGIN_RESULT = 3,       ///<登录结果
+	EVENT_LEAVEGROUP_RESULT = 4,  ///<退出组结果
+	EVENT_RECONNECT_RESULT = 5    ///<重连完成的结果
 };
 
 /**
