@@ -368,7 +368,7 @@ void CSettingWnd::UpdateDeviceList()
 		pLabel->SetAttribute(L"text", szMicName);
 		pComboMic->Add(pLabel);
 	}
-	pComboMic->SelectItem(0);
+	pComboMic->SelectItem(CSdkManager::GetInstance().GetOpenMic());
 	////////////////////////////////////////////////////////////////////////////
 
 	// 初始化扬声器下拉列表框
@@ -384,7 +384,7 @@ void CSettingWnd::UpdateDeviceList()
 		pLabel->SetAttribute(L"text", szAudName);
 		pComboAud->Add(pLabel);
 	}
-	pComboAud->SelectItem(0);
+	pComboAud->SelectItem(CSdkManager::GetInstance().GetOpenAud());
 	////////////////////////////////////////////////////////////////////////////
 
 	// 初始化摄像头下拉列表框

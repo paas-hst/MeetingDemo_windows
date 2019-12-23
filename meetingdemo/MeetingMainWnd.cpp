@@ -302,7 +302,7 @@ void CMeetingMainWnd::OnClick(TNotifyUI& msg)
 			CHAR sfilePath[MAX_PATH * 2];
 			demo::ConvertUnicodeToUtf8(szFilePath, sfilePath, MAX_PATH * 2);
 			strcat(sfilePath, "\\Record.mp4");
-			CSdkManager::GetInstance().GetFspEngin()->StartRecord(sfilePath, true);
+			CSdkManager::GetInstance().GetFspEngin()->StartRecord(sfilePath, 0, 0, 0, 0, true);
 
 			pBtnRecord->SetAttribute(L"normalimage", L"img\\main_toolbar_record_selected.png");
 			pBtnRecord->SetAttribute(L"hotimage", L"img\\main_toolbar_record_hover.png");

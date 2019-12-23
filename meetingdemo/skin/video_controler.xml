@@ -9,7 +9,7 @@
             <Button name="btn_video_more" height="26" width="26" normalimage="img\\video_more.png" padding="0, 10, 20, 10" />
 		</HorizontalLayout>
 		
-		<Label name="label_video_info" text="" textcolor="#FFFFFFFF" font="1" align="center" height="26" width="140" padding="20, 10, 20, 10" />
+		<Label name="label_video_info" text="" textcolor="#FFFFFFFF" font="1" align="center" height="26" width="160" padding="20, 10, 20, 10" />
 		
 	</VerticalLayout>
 </Window>

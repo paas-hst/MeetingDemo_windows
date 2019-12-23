@@ -438,7 +438,7 @@ void CVideoPanelUI::ChangeRenderMode(fsp::RenderMode mode)
 	}
 
 	fsp::IFspEngine* pEngin = CSdkManager::GetInstance().GetFspEngin();
-	if (GetLocalPreviewDeviceId() == fsp::INVALID_DEVICE_ID) {
+	if (GetLocalPreviewDeviceId() != fsp::INVALID_DEVICE_ID) {
 		pEngin->AddVideoPreview(GetLocalPreviewDeviceId(), GetRenderHwnd(), m_eRenderMode);
 	}
 	else {

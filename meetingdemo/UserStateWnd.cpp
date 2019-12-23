@@ -282,7 +282,7 @@ void CUserStateWnd::OnClick(TNotifyUI& msg)
 LRESULT CUserStateWnd::HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled)
 {
 	switch (uMsg) {
-	case WM_TIMER:
+	case WM_ACTIVATE:
 	{
 		if (CSdkManager::GetInstance().IsLogined()) {
 			//请求在线列表

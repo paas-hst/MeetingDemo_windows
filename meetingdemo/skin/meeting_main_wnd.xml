@@ -63,7 +63,7 @@
 			<Control width="1" bkcolor="#FFD8D8D8" />
 
 			<VerticalLayout width="300" bkcolor="#FFFFFFFF">
-				<List name="list_users" height="250" padding="6, 6, 6, 6" header="hidden" />
+				<List name="list_users" height="250" padding="6, 6, 6, 6" header="hidden" vscrollbar="true" />
 				<Control height="1" bkcolor="#FFD8D8D8" />
 				<RichEdit name="main_re_msgs" multiline="true" vscrollbar="true" autovscroll="true" enabled="false" rich="true" readonly="true" inset="6, 6, 6, 6" font="3" />
 				<Control height="1" bkcolor="#FFD8D8D8" />

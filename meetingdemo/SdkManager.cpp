@@ -10,10 +10,6 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 
-#define TIMER_REFRESHUSER 1    //用户列表刷新定时器
-
-#define REFRESHTIME       5000 //用户列表刷新间隔为5秒
-
 #define DESTROY_WND(WND_PTR)				\
 	if (WND_PTR)							\
 	{										\
@@ -43,19 +39,7 @@ CSdkManager::CSdkManager()
 
 CSdkManager::~CSdkManager()
 {
-	::KillTimer(m_hWnd,TIMER_REFRESHUSER);
 	Destroy();
-}
-
-LRESULT CSdkManager::HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	if (uMsg == WM_TIMER)
-	{
-		OnTimerEx(wParam);
-		return 0;
-	}
-
-	return __super::HandleMessage(uMsg, wParam, lParam);
 }
 
 CSdkManager& CSdkManager::GetInstance()
@@ -105,8 +89,6 @@ bool CSdkManager::Init()
 
 	m_pFspSignaling = m_pFspEngine->GetFspSignaling();
 	m_pFspSignaling->AddEventHandler(this);
-
-	::SetTimer(m_hWnd, TIMER_REFRESHUSER, REFRESHTIME, NULL);
 
 	return true;
 }
@@ -448,6 +430,28 @@ void CSdkManager::OnUsersStateRefreshed(fsp::ErrCode errCode, unsigned int nRequ
 	PostMessage(DUILIB_MSG_USER_REFRESH_FINISH);
 }
 
+void CSdkManager::OnUserStateChange(const fsp::UserInfo& changedUserInfo)
+{
+	fsp::Vector<fsp::UserInfo>::iterator iter;
+	for (iter = m_vecUsers.begin(); iter != m_vecUsers.end(); iter++) {
+		if (iter->user_id == changedUserInfo.user_id) {
+			break;
+		}
+	}
+
+	if (iter == m_vecUsers.end() && changedUserInfo.state == fsp::USER_STATE_ONLINE) {
+		m_vecUsers.push_back(changedUserInfo);
+	}
+	else if (iter != m_vecUsers.end() && changedUserInfo.state == fsp::USER_STATE_OFFLINE) {
+		m_vecUsers.erase(iter);
+	}
+	else if (iter != m_vecUsers.end()) {
+		iter->state = changedUserInfo.state;
+	}
+
+	PostMessage(DUILIB_MSG_USER_REFRESH_FINISH);
+}
+
 void CSdkManager::OnInviteCome(const char* szInviterUserId,
 	unsigned int nInviteId, const char* szGroupId, const char* szMsg)
 {
@@ -511,17 +515,6 @@ CDuiString CSdkManager::BuildErrorInfo(fsp::ErrCode errCode)
 	}
 
 	return strErrInfo;
-}
-
-LRESULT CSdkManager::OnTimerEx(UINT uMsg)
-{
-	if (uMsg == TIMER_REFRESHUSER)
-	{
-		fsp::Vector<fsp::String> vecUserIds;
-		unsigned int nRequestId;
-		m_pFspEngine->GetFspSignaling()->UserStatusRefresh(vecUserIds, &nRequestId);
-	}
-	return LRESULT();
 }
 
 std::string CSdkManager::BuildToken(const std::string& struserId)

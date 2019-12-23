@@ -21,6 +21,24 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="define.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MessageBox.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SdkManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ToolbarMenu.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="util.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ConfigParser.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
     <ClInclude Include="UIMenu.h">
       <Filter>dependence</Filter>
     </ClInclude>
@@ -45,40 +63,7 @@
     <ClInclude Include="targetver.h">
       <Filter>dependence</Filter>
     </ClInclude>
-    <ClInclude Include="aes.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="AppConfigWnd.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ConfigParser.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="define.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="fsp_tools.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="LoginWnd.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="MeetingMainWnd.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="MessageBox.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="SdkManager.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="SettingWnd.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="SpeakerSettingWnd.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ToolbarMenu.h">
+    <ClInclude Include="UserStateWnd.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="UIVideoPanel.h">
@@ -87,14 +72,35 @@
     <ClInclude Include="UIVideoPanelLayout.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="UserStateWnd.h">
+    <ClInclude Include="AppConfigWnd.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="util.h">
+    <ClInclude Include="MeetingMainWnd.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LoginWnd.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SettingWnd.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SpeakerSettingWnd.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="MessageBox.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SdkManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ToolbarMenu.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ConfigParser.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
     <ClCompile Include="aes.cpp">
       <Filter>dependence</Filter>
     </ClCompile>
@@ -110,34 +116,7 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>dependence</Filter>
     </ClCompile>
-    <ClCompile Include="AppConfigWnd.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ConfigParser.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="LoginWnd.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="main.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="MeetingMainWnd.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="MessageBox.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="SdkManager.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="SettingWnd.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="SpeakerSettingWnd.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ToolbarMenu.cpp">
+    <ClCompile Include="UserStateWnd.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="UIVideoPanel.cpp">
@@ -146,7 +125,22 @@
     <ClCompile Include="UIVideoPanelLayout.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="UserStateWnd.cpp">
+    <ClCompile Include="AppConfigWnd.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LoginWnd.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SettingWnd.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MeetingMainWnd.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SpeakerSettingWnd.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

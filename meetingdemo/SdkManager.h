@@ -75,8 +75,6 @@ public:
 private:
 	CSdkManager();
 	~CSdkManager();
-
-	virtual LRESULT HandleMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
 	
 	virtual LRESULT HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lParam, BOOL& bHandled) override;
 
@@ -102,6 +100,7 @@ private:
 
 	////////////// begin IFspSignalingEventHandler
 	void OnUsersStateRefreshed(fsp::ErrCode errCode, unsigned int nRequestId, const Vector<fsp::UserInfo> users);
+	void OnUserStateChange(const fsp::UserInfo& changedUserInfo);
 	void OnInviteCome(const char* szInviterUserId,
 		unsigned int nInviteId, const char* szGroupId, const char* szMsg);
 	void OnInviteAccepted(const char* szRemoteUserId, unsigned int nInviteId);
@@ -112,8 +111,6 @@ private:
 
 	std::string BuildToken(const std::string& struserId);
 	void ShowErrorWnd(const CDuiString& strErrInfo);
-
-	LRESULT OnTimerEx(UINT uMsg);
 	
 private:
 	CLoginWnd*		    m_pLoginWnd = nullptr;
