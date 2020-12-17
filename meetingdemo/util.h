@@ -106,16 +106,12 @@ class Utf82WStr
 public:
 	Utf82WStr(const char* szStr)
 	{
-		m_wstr = NULL;
-		if (szStr) {
-			DWORD nLen = 0;
-			nLen = MultiByteToWideChar(CP_UTF8, 0, szStr, -1, NULL, 0);
-			
-			m_wstr = new WCHAR[nLen + 8];
-			memset(m_wstr, 0, nLen + 8);
+		Init(szStr);
+	}
 
-			nLen = MultiByteToWideChar(CP_UTF8, 0, szStr, -1, m_wstr, nLen);
-		}
+	Utf82WStr(const std::string& str)
+	{
+		Init(str.c_str());
 	}
 
 	~Utf82WStr()
@@ -131,6 +127,19 @@ public:
 	}
 
 private:
+	void Init(const char* szStr) {
+		m_wstr = NULL;
+		if (szStr) {
+			DWORD nLen = 0;
+			nLen = MultiByteToWideChar(CP_UTF8, 0, szStr, -1, NULL, 0);
+
+			m_wstr = new WCHAR[nLen + 8];
+			memset(m_wstr, 0, nLen + 8);
+
+			nLen = MultiByteToWideChar(CP_UTF8, 0, szStr, -1, m_wstr, nLen);
+		}
+	}
+
 	WCHAR* m_wstr;
 };
 

@@ -87,6 +87,15 @@
     <ClInclude Include="SpeakerSettingWnd.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="BoardCreateWnd.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="BoardToolbarWnd.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="UIBoardPanel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MessageBox.cpp">
@@ -141,6 +150,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="SpeakerSettingWnd.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="BoardCreateWnd.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="BoardToolbarWnd.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="UIBoardPanel.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

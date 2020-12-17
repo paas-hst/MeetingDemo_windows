@@ -97,7 +97,8 @@ void CUserStateWnd::UpdateUserList()
 		CCheckBoxUI* pSelectCb = (CCheckBoxUI*)(pUserUi->FindSubControl(L"check_user_select"));
 
 		CDuiString wstrUsrId = demo::Utf82WStr(user.user_id.c_str()).GetWStr();
-		pLabelUserId->SetText(CSdkManager::GetInstance().GetLoginUserId() == user.user_id.c_str() ? wstrUsrId+_T("(我)") : wstrUsrId);
+		CDuiString wstrUserNickName = demo::Utf82WStr(CSdkManager::GetInstance().GetCustomName(user.user_id.c_str()).c_str()).GetWStr();
+		pLabelUserId->SetText(CSdkManager::GetInstance().GetLoginUserId() == user.user_id.c_str() ? wstrUserNickName +_T("(我)") : wstrUserNickName);
 		pLabelUserId->SetUserData(wstrUsrId);
 
 		if (!pFindUser->GetText().IsEmpty())

@@ -34,10 +34,13 @@ private:
 	void SetUseDefaultServer();
 	void SetUseUserDefinedServer();
 
+	void SetForceLogin();
+
 	void RestartApp();
 
 private:
 	bool m_bUseDefaultApp;
 	bool m_bUseDefaultServer;
+	bool m_bForceLogin;
 };
 

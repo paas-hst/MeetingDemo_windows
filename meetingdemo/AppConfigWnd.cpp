@@ -21,7 +21,10 @@ DUI_END_MESSAGE_MAP()
  * 参  数：无
  * 返回值：无
 ------------------------------------------------------------------------------*/
-CAppConfigWnd::CAppConfigWnd() : m_bUseDefaultApp(true), m_bUseDefaultServer(true)
+CAppConfigWnd::CAppConfigWnd() 
+	: m_bUseDefaultApp(true)
+	, m_bUseDefaultServer(true)
+	, m_bForceLogin(true)
 {
 }
 
@@ -149,6 +152,20 @@ void CAppConfigWnd::SetUseDefaultServer()
 	pServerAddressEdit->SetEnabled(false);
 }
 
+void CAppConfigWnd::SetForceLogin()
+{
+	if (m_bForceLogin)
+	{
+		COptionUI* pForceLoginOption = (COptionUI*)m_PaintManager.FindControl(L"force_login_yes_option");
+		pForceLoginOption->Selected(true);
+	}
+	else
+	{
+		COptionUI* pForceLoginOption = (COptionUI*)m_PaintManager.FindControl(L"force_login_no_option");
+		pForceLoginOption->Selected(true);
+	}
+}
+
 void CAppConfigWnd::SetUseUserDefinedServer()
 {
 	demo::ClientConfig& config = demo::CConfigParser::GetInstance().GetClientConfig();
@@ -182,6 +199,9 @@ void CAppConfigWnd::InitWindow()
 	(m_bUseDefaultApp = !config.bAppUserDefine) ? SetUseDefaultApp() : SetUseUserDefinedApp();
 
 	(m_bUseDefaultServer = !config.bServerUserDefine) ? SetUseDefaultServer() : SetUseUserDefinedServer();
+
+	m_bForceLogin = config.bForceLogin;
+	SetForceLogin();
 }
 
 /*------------------------------------------------------------------------------
@@ -218,6 +238,8 @@ void CAppConfigWnd::OnClick(TNotifyUI& msg)
 			USES_CONVERSION;
 			config.strUserServerAddr = T2A(pServerAddressEdit->GetText());
 		}
+
+		config.bForceLogin = m_bForceLogin;
 
 		Close(); // 关闭对话框
 
@@ -263,8 +285,17 @@ void CAppConfigWnd::OnSelectChanged(TNotifyUI& msg)
 			SetUseUserDefinedServer();
 		}
 	}
+	else if (msg.pSender->GetName() == L"force_login_yes_option")
+	{
+		m_bForceLogin = true;
+		SetForceLogin();
+	}
+	else if (msg.pSender->GetName() == L"force_login_no_option")
+	{
+		m_bForceLogin = false;
+		SetForceLogin();
+	}
 }
-
 
 /*------------------------------------------------------------------------------
  * 描  述：重启程序

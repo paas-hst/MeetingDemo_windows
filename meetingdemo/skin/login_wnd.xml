@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Window size="720,480" caption="0,0,0,30" maxinfo="640,400">
+<Window size="720,500" caption="0,0,0,30" maxinfo="640,400">
 	<Font id="0" name="微软雅黑" size="14" bold="false" default="true" />
 	<Font id="1" name="微软雅黑" size="32" bold="false" />
 	<Font id="2" name="微软雅黑" size="10" bold="false" />
@@ -19,7 +19,17 @@
 		<Label name="login_label" height="45" width="64" padding="328,0,328,0" font="1" text="登录" textcolor="0xFFFFFFFF" align="center" />
 		
 		<Control height="69" />	
-		<RichEdit name="user_name_edit" bkcolor="#FF5E627D" textcolor="0xFFFFFFFF" width="480" height="50"  padding="120,0" inset="10,10,0,0" wanttab="false" rich="false" multiline="false" textpadding="20,5" tipvalue="请输入User ID" tipvaluecolor="#FF989898" tooltip="请输入User ID" />
+		<HorizontalLayout height="50" >
+		    <Label width="120" font="3" text="UserId:" textcolor="0xFFFFFFFF" align="right" />
+			<RichEdit name="user_name_edit" bkcolor="#FF5E627D" textcolor="0xFFFFFFFF" width="460" height="50"  padding="10,0" inset="10,10,0,0" wanttab="false" rich="false" multiline="false" textpadding="20,5" tipvalue="请输入User ID" tipvaluecolor="#FF989898" tooltip="请输入User ID" />
+		</HorizontalLayout>
+		
+		<Control height="10" />	
+		
+		<HorizontalLayout height="50" >
+		    <Label width="120" font="3" text="自定义昵称(可选):" textcolor="0xFFFFFFFF" align="right" />
+		    <RichEdit name="custom_name_edit" bkcolor="#FF5E627D" textcolor="0xFFFFFFFF" width="460" height="50"  padding="10,0" inset="10,10,0,0" wanttab="false" rich="false" multiline="false" textpadding="20,5" tipvalue="自定义昵称(可选)" tipvaluecolor="#FF989898" tooltip="自定义昵称(可选)" />
+		</HorizontalLayout>
 
 		<Control height="20" />	
 		<Button name="login_btn" width="480" height="100"  padding="120,0" bkimage="img\\login\\login_btn.png"/>
@@ -35,11 +45,11 @@
 		</HorizontalLayout>
 		
 		<HorizontalLayout height="14" width="1000" padding="0, 0, 0, 4" >
-			<Label font="2" text="Copyright 2013-2018 hst.com. All Rights Reserved." textcolor="0xFFACB4CC" align="center"/>
+			<Label font="2" text="Copyright 2013-2020 hst.com. All Rights Reserved." textcolor="0xFFACB4CC" align="center"/>
 		</HorizontalLayout>
 		
 		<HorizontalLayout height="14" width="1000" padding="0, 0, 0, 15" >
-			<Label font="2" text="深圳银澎云计算有限公司" textcolor="0xFFACB4CC" align="center"/>
+			<Label font="2" text="深圳齐心好视通云计算有限公司" textcolor="0xFFACB4CC" align="center"/>
 		</HorizontalLayout>
 
 	</VerticalLayout>

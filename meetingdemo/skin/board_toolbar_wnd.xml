@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Window size="80,560" caption="0,0,0,30">
+	<Font id="0" name="微软雅黑" size="14" bold="false" default="true" />
+	<Font id="1" name="微软雅黑" size="30" bold="false" />
+	<Font id="2" name="微软雅黑" size="9" bold="false" />
+	<VerticalLayout bkcolor="#FFD8D8D8">
+		<!-- 顶部标题栏 -->
+		<HorizontalLayout height="36" bkimage="img\\titlebar_bg.png">
+		</HorizontalLayout>
+
+        <Button name="btn_board_select" height="34" padding="4, 4, 4, 4" text="选择" tooltip="选择" textcolor="#FFFFFFFF" bkcolor="#ff6A7DFE" borderround="2, 2" />
+		<Button name="btn_board_clear" height="34" padding="4, 4, 4, 4" text="橡皮檫" tooltip="橡皮檫" textcolor="#FFFFFFFF" bkcolor="#ff6A7DFE" borderround="2, 2" />
+        <Button name="btn_board_clear" height="34" padding="4, 4, 4, 4" text="清空" tooltip="清空" textcolor="#FFFFFFFF" bkcolor="#ff6A7DFE" borderround="2, 2" />
+		<Button name="btn_board_line" height="34" padding="4, 4, 4, 4" text="直线" tooltip="直线" textcolor="#FFFFFFFF" bkcolor="#ff6A7DFE" borderround="2, 2" />
+		<Button name="btn_board_path" height="34" padding="4, 4, 4, 4" text="曲线" tooltip="曲线" textcolor="#FFFFFFFF" bkcolor="#ff6A7DFE" borderround="2, 2" />
+		<Button name="btn_board_text" height="34" padding="4, 4, 4, 4" text="文本" tooltip="文本" textcolor="#FFFFFFFF" bkcolor="#ff6A7DFE" borderround="2, 2" />
+		<Button name="btn_board_undo" height="34" padding="4, 4, 4, 4" text="撤销" tooltip="撤销" textcolor="#FFFFFFFF" bkcolor="#ff6A7DFE" borderround="2, 2" />
+		<Button name="btn_board_redo" height="34" padding="4, 4, 4, 4" text="恢复" tooltip="恢复" textcolor="#FFFFFFFF" bkcolor="#ff6A7DFE" borderround="2, 2" />
+
+	</VerticalLayout>
+</Window>

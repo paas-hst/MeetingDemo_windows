@@ -26,6 +26,10 @@ struct ClientConfig
 
 	std::string strServerAddr;
 	std::string strUserServerAddr;
+
+	bool bForceLogin;
+
+	std::string strRecvVoiceVariant;
 };
 
 class CConfigParser

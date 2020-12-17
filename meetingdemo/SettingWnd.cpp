@@ -58,6 +58,11 @@ void CSettingWnd::OnValueChanged(TNotifyUI& msg)
 		CSliderUI* pSliderMic = (CSliderUI*)m_PaintManager.FindControl(L"slider_mic");
 		CSdkManager::GetInstance().SetMicVol(pSliderMic->GetValue());
 	}
+	else if (msg.pSender->GetName() == L"voice_variant")
+	{
+		CSliderUI* pSliderMic = (CSliderUI*)m_PaintManager.FindControl(L"voice_variant");
+		CSdkManager::GetInstance().SetVoiceVariant(pSliderMic->GetValue());
+	}
 	else if (msg.pSender->GetName() == L"slider_aud")
 	{
 		CSliderUI* pSliderAud = (CSliderUI*)m_PaintManager.FindControl(L"slider_aud");
@@ -88,6 +93,9 @@ void CSettingWnd::OnClick(TNotifyUI& msg)
 		CRichEditUI* pEditTop = static_cast<CRichEditUI*>(m_PaintManager.FindControl(_T("share_top_edit")));
 		CRichEditUI* pEditRight = static_cast<CRichEditUI*>(m_PaintManager.FindControl(_T("share_right_edit")));
 		CRichEditUI* pEditBottom = static_cast<CRichEditUI*>(m_PaintManager.FindControl(_T("share_bottom_edit")));
+		CCheckBoxUI* pCheckWndAdapt = (CCheckBoxUI*)m_PaintManager.FindControl(L"check_video_wndadapt");
+		CCheckBoxUI* pCheckBdAdapt = (CCheckBoxUI*)m_PaintManager.FindControl(L"check_video_bdadapt");
+
 		if (pOptionShareSpeed->IsSelected()) {
 			screenShareConfig.qualityBias = fsp::SCREEN_SHARE_BIAS_SPEED;
 		}
@@ -101,6 +109,8 @@ void CSettingWnd::OnClick(TNotifyUI& msg)
 		screenShareConfig.bottom = _tstoi(pEditBottom->GetText());
 
 		CSdkManager::GetInstance().SetScreenShareConfig(screenShareConfig);
+
+		fsp::IFspEngine* pEngin = CSdkManager::GetInstance().GetFspEngin();
 
 		Close();
 	}
@@ -119,8 +129,6 @@ LRESULT CSettingWnd::HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lParam
 			// 显示能量值
 			WCHAR szImgName[32];
 			_snwprintf_s(szImgName, 32, L"img\\setting\\menu_wave%d.png", dwEnergy / 10);
-			//CLabelUI* pLabel = (CLabelUI*)m_PaintManager.FindControl(L"mic_energy");
-			//pLabel->SetBkImage(szImgName);
 			CProgressUI* pEnergyProgress = (CProgressUI*)m_PaintManager.FindControl(_T("progres_mic_energy"));
 			pEnergyProgress->SetValue(dwEnergy);
 		}
@@ -134,8 +142,6 @@ LRESULT CSettingWnd::HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lParam
 			// 显示能量值
 			WCHAR szImgName[32];
 			_snwprintf_s(szImgName, 32, L"img\\setting\\menu_wave%d.png", dwEnergy / 10);
-			//CLabelUI* pLabel = (CLabelUI*)m_PaintManager.FindControl(L"aud_energy");
-			//pLabel->SetBkImage(szImgName);
 
 			CProgressUI* pEnergyProgress = (CProgressUI*)m_PaintManager.FindControl(_T("progres_aud_energy"));
 			pEnergyProgress->SetValue(dwEnergy);
@@ -170,6 +176,18 @@ void CSettingWnd::OnSelectMic(TNotifyUI& msg)
 	{
 		pMicSlider->SetEnabled(true);
 		pMicSlider->SetValue(CSdkManager::GetInstance().GetMicVol());
+	}
+
+	pMicSlider = (CSliderUI*)m_PaintManager.FindControl(L"voice_variant");
+	if (dwMicIndex == INVALID_MIC_INDEX)
+	{
+		pMicSlider->SetEnabled(false);
+		pMicSlider->SetValue(0);
+	}
+	else
+	{
+		pMicSlider->SetEnabled(true);
+		pMicSlider->SetValue(CSdkManager::GetInstance().GetVoiceVariant());
 	}
 }
 
@@ -246,6 +264,11 @@ void CSettingWnd::InitWindow()
 	m_wndShadow.SetImage(_T("img\\wnd_bg.png"), rcCorner, rcHoleOffset);
 
 	m_pVideoPanel = (CVideoPanelUI*)m_PaintManager.FindControl(L"vrender_previewer");
+
+	//feature 开关
+	CCheckBoxUI* pCheckWndAdapt = (CCheckBoxUI*)m_PaintManager.FindControl(L"check_video_wndadapt");
+	CCheckBoxUI* pCheckBdAdapt = (CCheckBoxUI*)m_PaintManager.FindControl(L"check_video_bdadapt");
+	fsp::IFspEngine* pEngin = CSdkManager::GetInstance().GetFspEngin();
 
 	// 初始化分辨率下拉列表
 	CComboUI* pComboResolution = (CComboUI*)m_PaintManager.FindControl(L"combo_resolution");

@@ -22,3 +22,6 @@
 
 <!--User-defined access service address-->
 <UserServerAddr></UserServerAddr>
+
+<!--Whether force login-->
+<ForceLogin>false</ForceLogin>

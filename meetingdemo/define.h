@@ -10,6 +10,7 @@
 #include <string>
 
 #include "fsp_engine.h"
+#include "doc_define.h"
 
 // 无效值定义
 #define INVALID_MIC_INDEX					0xFFFFFFFF
@@ -18,6 +19,7 @@
 #define INVALID_VOLUME						0xFFFFFFFF
 
 // 内部自定义消息
+#define DUILIB_MSG_CMMONINFO                WM_USER + 100
 #define DUILIB_MSG_SET_MIC_DEV				WM_USER + 101
 #define DUILIB_MSG_SET_AUD_DEV				WM_USER + 102
 #define DUILIB_MSG_SET_MIC_VOL				WM_USER + 103
@@ -40,6 +42,10 @@
 #define DUILIB_MSG_RECIVE_CAHTMSG           WM_USER + 121
 #define DUILIB_MSG_REMOTE_ADD_USER          WM_USER + 123
 #define DUILIB_MSG_REMOTE_DEL_USER          WM_USER + 124
+#define DUILIB_MSG_WHITEBOARD_PUBLISH       WM_USER + 125
+#define DUILIB_MSG_DOCUMENT_EVENT			WM_USER + 126
+#define DUILIB_MSG_WHITEBOARD_PAGE_CHANGE	WM_USER + 127
+#define	DUILIB_MSG_WHITEBOARD_SYN_DATA	    WM_USER + 128
 
 // 登录结果
 #define LOGIN_SUCCESS		1
@@ -143,6 +149,27 @@ struct MsgReciveInfo
 struct RemoteUserEventInfo
 {
 	std::string remote_userid;
+	std::string nick_name;
+};
+
+struct RemoteWhiteboardInfo
+{
+	fsp::String strMediaId;
+	fsp::WhiteBoardProfile whiteboard_profile;
+	int nPageId;
+};
+
+struct WhiteBoardPulishInfo
+{
+	std::string strWhiteBoardId;
+	std::string strWhiteBoardName;
+	bool isPublish;
+};
+
+struct WhiteboardDocumentInfo
+{
+	fsp_wb::DocStatusType doc_status_type;
+	fsp::ErrCode err_code;
 };
 
 struct IEventCallback

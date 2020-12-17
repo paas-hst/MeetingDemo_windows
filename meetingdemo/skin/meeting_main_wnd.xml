@@ -19,7 +19,7 @@
 
 		<HorizontalLayout>
 			<VerticalLayout bkcolor="#FFD8D8D8">
-				<HorizontalLayout height="24" bkcolor="#FFFFFFFF">
+				<HorizontalLayout name="main_opt" height="24" bkcolor="#FFFFFFFF">
 					<Option name="tabopt_video" width="90" text="视 频" selectedimage="img\\main_tonal_bg.png" textcolor="#ff454545" hottextcolor="#ff6a7dfe" selectedtextcolor="#ffffffff" group="main_tab" selected="true" />
 					<Option name="tabopt_screenshare" width="90" text="屏幕共享" selectedimage="img\\main_tonal_bg.png" textcolor="#ff454545" hottextcolor="#ff6a7dfe" selectedtextcolor="#ffffffff" group="main_tab"/>
 					<Control />
@@ -55,6 +55,7 @@
 					<Button name="btn_speaker" width="80" tooltip="调节扬声器音量"  normalimage="file='img\\main_toolbar_speaker_normal.png'" hotimage="file='img\\main_toolbar_speaker_hover.png'" pushedimage="img\\main_toolbar_speaker_selected.png" selectedimage="img\\main_toolbar_speaker_selected.png" />
 					<Button name="btn_record" width="80" tooltip="录制屏幕内容"  normalimage="file='img\\main_toolbar_record_normal.png'" hotimage="file='img\\main_toolbar_record_hover.png'" pushedimage="img\\main_toolbar_record_selected.png" selectedimage="img\\main_toolbar_record_selected.png" />
 					<Button name="btn_CallIn" width="80" tooltip="呼叫他人加入组"  normalimage="file='img\\main_toolbar_call_normal.png'" hotimage="file='img\\main_toolbar_call_hover.png'" pushedimage="img\\main_toolbar_call_selected.png" />
+					<Button name="btn_board" width="80" tooltip="共享白板"  normalimage="file='img\\main_toolbar_board_normal.png'" hotimage="file='img\\main_toolbar_board_hover.png'" pushedimage="img\\main_toolbar_board_selected.png" />
 					<Button name="btn_setting" width="80" tooltip="音视频设置"  normalimage="file='img\\main_toolbar_setting_normal.png'" hotimage="file='img\\main_toolbar_setting_hover.png'" pushedimage="img\\video\\main_toolbar_setting_selected.png" />
 					<Control />
 				</HorizontalLayout>

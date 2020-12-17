@@ -18,6 +18,7 @@
 #include "define.h"
 #include "UIVideoPanel.h"
 #include "UIVideoPanelLayout.h"
+#include "UIBoardPanel.h"
 
 #define MENU_ITEM_HEIGHT	36
 #define MENU_ITEM_WIDTH		220
@@ -42,6 +43,7 @@ CMeetingMainWnd::CMeetingMainWnd()
 	m_bBroadcastMic = false;
 	m_isScreenSharing = false;
 	m_isRecording = false;
+	m_isBoarding = false;
 
 	m_pVideoLayout = nullptr;
 	m_pScreenShareLayout = nullptr;
@@ -223,6 +225,10 @@ CControlUI* CMeetingMainWnd::CreateControl(LPCTSTR pstrClass)
 	{
 		return new CVideoPanelLayoutUI();
 	}
+	if (_tcsicmp(pstrClass, CBoardPanelUI::K_UI_INTERFACE_NAME) == 0)
+	{
+		return new CBoardPanelUI();
+	}
 	else {
 		return WindowImplBase::CreateControl(pstrClass);
 	}
@@ -242,14 +248,14 @@ void CMeetingMainWnd::OnClick(TNotifyUI& msg)
 		fsp::IFspEngine* pEngin = CSdkManager::GetInstance().GetFspEngin();
 		if (m_bBroadcastMic)
 		{
-			if (fsp::ErrCode::ERR_OK == pEngin->StopPublishAudio())
+			if (fsp::ErrCode::ERR_OK == pEngin->StopPublishAudio(fsp::RESERVED_AUDIOID_MICROPHONE))
 			{
 				m_bBroadcastMic = false;
 			}
 		}
 		else
 		{
-			if (fsp::ErrCode::ERR_OK == pEngin->StartPublishAudio())
+			if (fsp::ErrCode::ERR_OK == pEngin->StartPublishAudio(fsp::RESERVED_AUDIOID_MICROPHONE))
 			{
 				m_bBroadcastMic = true;
 			}
@@ -349,6 +355,20 @@ void CMeetingMainWnd::OnClick(TNotifyUI& msg)
 		//呼叫页面
 		CSdkManager::GetInstance().GetUserStateWnd()->ShowGroupJoined();
 	}
+	else if (msg.pSender->GetName() == L"btn_board")
+	{
+	    POINT point;
+	    point.x = msg.pSender->GetPos().left - 20;
+	    point.y = msg.pSender->GetPos().top - 65;
+	    if (m_BoardCreateWnd.GetHWND() == NULL)
+	    {
+		    m_BoardCreateWnd.Create(this->GetHWND(), _T(""), UI_WNDSTYLE_DIALOG | WS_EX_LAYERED, 0, 0, 0, 0, 0);
+	    }
+	    ClientToScreen(m_hWnd, &point);
+	    ::SetWindowPos(m_BoardCreateWnd.GetHWND(), HWND_TOP, point.x, point.y, 120, 60, 0);
+	    m_BoardCreateWnd.ShowWindow(true);
+		SetToolbarBoardBtnStatus(m_isBoarding);
+	}
 	else if (msg.pSender->GetName() == L"main_msg_send")
 	{
 		//显示框添加文字
@@ -410,10 +430,134 @@ void CMeetingMainWnd::OnClick(TNotifyUI& msg)
 		CComboUI *pUserCombo = (CComboUI*)(m_PaintManager.FindControl(L"main_msg_selectuser"));
 		pUserCombo->RemoveAll();
 
+		ClearAllBoardLayout();
+
 		SetToolbarCamBtnStatus(false);
 		SetToolbarMicBtnStatus(false);
 		SetToolbarScreenshareBtnStatus(false);
+		SetToolbarBoardBtnStatus(false);
     }
+	else if (msg.pSender->GetName() == L"btn_board_edit")
+	{
+		fsp::BoardOperateType  Operatemode = CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->GetCurOperateType(m_strCurBoardId.c_str());
+		if (Operatemode == fsp::BOARD_OPERATE_UNKOWN) {
+			CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->SetCurOperateType(m_strCurBoardId.c_str(), fsp::BOARD_OPERATE_PRODUCE);
+			CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->SetCurProduceGraphType(m_strCurBoardId.c_str(), fsp::GRAPH_TYPE_PATH);
+			SetBoardEditStatus(msg.pSender->GetParent(), true);
+			msg.pSender->SetBkColor(0xFFFF0000);
+			msg.pSender->SetText(L"退出标注");
+		}
+		else {
+			CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->SetCurOperateType(m_strCurBoardId.c_str(), fsp::BOARD_OPERATE_UNKOWN);
+			SetBoardEditStatus(msg.pSender->GetParent(), false);
+			msg.pSender->SetBkColor(0xFF00FF52);
+			msg.pSender->SetText(L"标注");
+		}
+	}
+	else if (msg.pSender->GetName() == L"btn_board_line")
+	{
+	    CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->SetCurOperateType(m_strCurBoardId.c_str(), fsp::BOARD_OPERATE_PRODUCE);
+	    CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->SetCurProduceGraphType(m_strCurBoardId.c_str(), fsp::GRAPH_TYPE_LINE);
+	}
+	else if (msg.pSender->GetName() == L"btn_board_path") {
+	    CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->SetCurOperateType(m_strCurBoardId.c_str(), fsp::BOARD_OPERATE_PRODUCE);
+	    CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->SetCurProduceGraphType(m_strCurBoardId.c_str(), fsp::GRAPH_TYPE_PATH);
+	}
+	else if (msg.pSender->GetName() == L"btn_board_text") {
+	    CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->SetCurOperateType(m_strCurBoardId.c_str(), fsp::BOARD_OPERATE_PRODUCE);
+	    CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->SetCurProduceGraphType(m_strCurBoardId.c_str(), fsp::GRAPH_TYPE_TEXT);
+	}
+	else if (msg.pSender->GetName() == L"btn_board_clear") {
+	    CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->ClearCurrentPage(m_strCurBoardId.c_str());
+	}
+	else if (msg.pSender->GetName() == L"btn_board_select") {
+	    CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->SetCurOperateType(m_strCurBoardId.c_str(), fsp::BOARD_OPERATE_SELECT);
+	}
+	else if (msg.pSender->GetName() == L"btn_board_delete") {
+	    CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->SetCurOperateType(m_strCurBoardId.c_str(), fsp::BOARD_OPERATE_DELETE);
+	}
+	else if (msg.pSender->GetName() == L"btn_board_undo") {
+	    CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->Undo(m_strCurBoardId.c_str());
+	}
+	else if (msg.pSender->GetName() == L"btn_board_redo") {
+	    CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->Redo(m_strCurBoardId.c_str());
+	}
+	else if (msg.pSender->GetName() == L"btn_board_thin") {
+	    CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->SetLineWidth(m_strCurBoardId.c_str(), 4);
+	}
+	else if (msg.pSender->GetName() == L"btn_board_mid") {
+	    CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->SetLineWidth(m_strCurBoardId.c_str(), 8);
+	}
+	else if (msg.pSender->GetName() == L"btn_board_thick") {
+	    CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->SetLineWidth(m_strCurBoardId.c_str(), 12);
+	}
+	else if (msg.pSender->GetName() == L"btn_board_red") {
+	    CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->SetLineColor(m_strCurBoardId.c_str(), 0xffff0000);
+	}
+	else if (msg.pSender->GetName() == L"btn_board_blue") {
+	    CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->SetLineColor(m_strCurBoardId.c_str(), 0xff0098FF);
+	}
+	else if (msg.pSender->GetName() == L"btn_board_green") {
+	    CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->SetLineColor(m_strCurBoardId.c_str(), 0xff00FF52);
+	}
+	else if (msg.pSender->GetName() == L"btn_board_prePage") {
+		int nCurrentPageID = CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->GetCurrentPageId(m_strCurBoardId.c_str());
+		int nPageConut = CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->GetPageCount(m_strCurBoardId.c_str());
+		if (nCurrentPageID > 0) {
+			nCurrentPageID--;
+			CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->ChangeCurrentPage(m_strCurBoardId.c_str(), nCurrentPageID);
+		}
+		SetBoardPageBtnStatus(msg.pSender->GetParent(), (nCurrentPageID == 0), ((nCurrentPageID + 1) >= nPageConut));
+
+		CControlUI* pBtnBoardPageId = m_PaintManager.FindSubControlByName(msg.pSender->GetParent(), L"btn_board_curPage");
+		TCHAR swzConfigFile[50];
+		_swprintf(swzConfigFile, L"%d", nCurrentPageID + 1);
+		pBtnBoardPageId->SetAttribute(L"text", swzConfigFile);
+	}
+	else if (msg.pSender->GetName() == L"btn_board_nexPage") {
+		int nCurrentPageID = CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->GetCurrentPageId(m_strCurBoardId.c_str());
+		int nPageConut = CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->GetPageCount(m_strCurBoardId.c_str());
+		if (nCurrentPageID < (nPageConut - 1)) {
+			nCurrentPageID++;
+			CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->ChangeCurrentPage(m_strCurBoardId.c_str(), nCurrentPageID);
+		}
+		SetBoardPageBtnStatus(msg.pSender->GetParent(), (nCurrentPageID == 0), (nCurrentPageID + 1) >= nPageConut);
+
+		CControlUI* pBtnBoardPageId = m_PaintManager.FindSubControlByName(msg.pSender->GetParent(), L"btn_board_curPage");
+		TCHAR swzConfigFile[20];
+		_swprintf(swzConfigFile, L"%d", nCurrentPageID + 1);
+		pBtnBoardPageId->SetAttribute(L"text", swzConfigFile);
+	}
+	else if (msg.pSender->GetName() == L"btn_board_syn") {
+		bool synmode = CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->GetPageChangeSynMode(m_strCurBoardId.c_str());
+		CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->SetPageChangeSynMode(m_strCurBoardId.c_str(), !synmode);
+		msg.pSender->SetText((!synmode) ? L"同步" : L"自由");
+		if (!synmode) {
+			int nPageConut = CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->GetPageCount(m_strCurBoardId.c_str());
+			int nCurrentPageID = CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->GetCurrentPageId(m_strCurBoardId.c_str());
+			CControlUI* pBtnBoardPageId = m_PaintManager.FindSubControlByName(msg.pSender->GetParent(), L"btn_board_curPage");
+			SetBoardPageBtnStatus(msg.pSender->GetParent(), (nCurrentPageID == 0), (nCurrentPageID + 1) >= nPageConut);
+			pBtnBoardPageId->SetAttribute(L"text", std::to_wstring(nCurrentPageID + 1).c_str());
+		}
+	}
+	else if (msg.pSender->GetName() == L"btn_board_close") {
+		//销毁白板
+		ErrCode hr = CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->Destory(m_strCurBoardId.c_str());
+		if (hr == ERR_OK) {
+			CDuiString strMsg;
+			strMsg.Format(L"关闭白板:(ID: %s)", demo::Utf82WStr(m_strCurBoardId.c_str()));
+			AppendMsg(strMsg);
+			if (m_isBoarding) {
+				m_isBoarding = false;
+			}
+		}
+		//本地销毁界面
+		ReleaseBoardLayout(m_strCurBoardId);
+		CTabLayoutUI* pTabLayout = static_cast<CTabLayoutUI*>(m_PaintManager.FindControl(_T("main_tab")));
+		pTabLayout->SelectItem(0);
+		auto opts = dynamic_cast<CControlUI*>(m_PaintManager.FindControl(_T("tabopt_video")));
+		opts->SetAttribute(_T("selected"), _T("true"));
+	}
 	else
 	{
 		WindowImplBase::OnClick(msg);
@@ -462,6 +606,14 @@ void CMeetingMainWnd::OnSelectChanged(TNotifyUI& msg)
 	}
 	else if (msg.pSender->GetName() == L"tabopt_screenshare") {
 		pTabLayout->SelectItem(1);
+	}
+	else if (msg.pSender->GetUserData().IsEmpty() == false) {
+		std::string strBoardId = demo::WStr2Utf8(msg.pSender->GetUserData().GetData()).GetUtf8Str();
+		CControlUI* nBoardLayout = FindBoardLayout(strBoardId);
+		if (nBoardLayout) {
+			pTabLayout->SelectItem(nBoardLayout);
+			m_strCurBoardId = strBoardId;
+		}
 	}
 }
 
@@ -595,6 +747,13 @@ LRESULT CMeetingMainWnd::HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lP
 		((MINMAXINFO*)lParam)->ptMaxSize.y = (rt.bottom - rt.top);
 		break;
 	}
+	case DUILIB_MSG_CMMONINFO:
+	{
+		CDuiString* pStrInfo = (CDuiString*)wParam;
+		AppendMsg(*pStrInfo);
+		delete pStrInfo;
+	}
+	break;
 	case DUILIB_MSG_ADD_REMOTE_VIDEO:
 	{
 		//查看远端视频
@@ -697,11 +856,11 @@ LRESULT CMeetingMainWnd::HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lP
 			pMB->CenterWindow();
 			if (IDOK == pMB->ShowModal()) {
 				CSdkManager::GetInstance().GetFspEngin()->RemoteControlOperation(
-					pInfo->strUserId, fsp::REMOTE_CONTROL_ACCEPT);
+					pInfo->strUserId.c_str(), fsp::REMOTE_CONTROL_ACCEPT);
 			}
 			else {
 				CSdkManager::GetInstance().GetFspEngin()->RemoteControlOperation(
-					pInfo->strUserId, fsp::REMOTE_CONTROL_REJECT);
+					pInfo->strUserId.c_str(), fsp::REMOTE_CONTROL_REJECT);
 			}
 		}
 		else if (pInfo->operationType == fsp::REMOTE_CONTROL_CANCEL) {
@@ -758,6 +917,84 @@ LRESULT CMeetingMainWnd::HandleCustomMessage(UINT uMsg, WPARAM wParam, LPARAM lP
 		DelMainUserItem(pInfo->remote_userid);
 		DelChatUserItem(pInfo->remote_userid);
 	}break;
+	case DUILIB_MSG_WHITEBOARD_PUBLISH:
+	{
+		WhiteBoardPulishInfo* pInfo = (WhiteBoardPulishInfo*)wParam;
+		if (pInfo->isPublish) {
+			EnsureBoardLayout(pInfo->strWhiteBoardId, pInfo->strWhiteBoardName);
+			CDuiString strMsg;
+			strMsg.Format(L"收到发布白板:(%s,%s)", demo::Utf82WStr(pInfo->strWhiteBoardName.c_str()),
+				demo::Utf82WStr(pInfo->strWhiteBoardId.c_str()));
+			AppendMsg(strMsg);
+		}
+		else {
+			CDuiString strMsg;
+			strMsg.Format(L"停止发布白板:(%s,%s)", demo::Utf82WStr(pInfo->strWhiteBoardName.c_str()),
+				demo::Utf82WStr(pInfo->strWhiteBoardId.c_str()));
+			AppendMsg(strMsg);
+			ReleaseBoardLayout(pInfo->strWhiteBoardId);
+			m_isBoarding = false;
+			SetToolbarBoardBtnStatus(m_isBoarding);
+		}
+		delete pInfo;
+	}
+	break;
+	case DUILIB_MSG_WHITEBOARD_SYN_DATA:
+	{
+		RemoteWhiteboardInfo* pInfo = (RemoteWhiteboardInfo*)wParam;
+
+		int nCurrentPageID = pInfo->nPageId;
+		int nPageConut = CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->GetPageCount(pInfo->strMediaId.c_str());
+		CControlUI* nBoardLayout = FindBoardLayout(pInfo->strMediaId.c_str());
+		SetBoardPageBtnStatus(nBoardLayout, (nCurrentPageID == 0), (nCurrentPageID + 1) >= nPageConut);
+
+		CControlUI* pBtnBoardPageId = m_PaintManager.FindSubControlByName(nBoardLayout, L"btn_board_curPage");
+		TCHAR swzText[80];
+		_swprintf(swzText, L"%d", nCurrentPageID + 1);
+		pBtnBoardPageId->SetAttribute(L"text", swzText);
+
+		//CControlUI* pBtnBoardtab = m_PaintManager.FindControl(L"tabopt_board1");
+		//_swprintf(swzText, L"%s", demo::Utf82WStr(pInfo->whiteboard_profile.boardname.c_str()));
+		//pBtnBoardtab->SetAttribute(L"text", swzText);
+
+		CDuiString strMsg;
+		strMsg.Format(L"白板同步:(name:%s)(%s),%dx%d,[%d-%d]", demo::Utf82WStr(pInfo->whiteboard_profile.boardname.c_str()),
+			demo::Utf82WStr(pInfo->strMediaId.c_str()), pInfo->whiteboard_profile.width, pInfo->whiteboard_profile.height,
+			pInfo->whiteboard_profile.page, nCurrentPageID + 1);
+		AppendMsg(strMsg);
+
+		delete pInfo;
+	}
+		break;
+	case DUILIB_MSG_WHITEBOARD_PAGE_CHANGE:
+	{
+		RemoteWhiteboardInfo* pInfo = (RemoteWhiteboardInfo*)wParam;
+		int nCurrentPageID = pInfo->nPageId;
+		int nPageConut = CSdkManager::GetInstance().GetFspEngin()->GetFspWhiteBoard()->GetPageCount(pInfo->strMediaId.c_str());
+		CControlUI* nBoardLayout = FindBoardLayout(pInfo->strMediaId.c_str());
+		SetBoardPageBtnStatus(nBoardLayout, (nCurrentPageID == 0), (nCurrentPageID + 1) >= nPageConut);
+
+		CControlUI* pBtnBoardPageId = m_PaintManager.FindSubControlByName(nBoardLayout, L"btn_board_curPage");
+		TCHAR swzText[20];
+		_swprintf(swzText, L"%d", nCurrentPageID + 1);
+		pBtnBoardPageId->SetAttribute(L"text", swzText);
+
+		//CDuiString strMsg;
+		//strMsg.Format(L"切换白板页:(%s:%d)", demo::Utf82WStr(pInfo->strMediaId.c_str()), nCurrentPageID+1);
+		//AppendMsg(strMsg);
+
+		delete pInfo;
+	}
+		break;
+	case DUILIB_MSG_DOCUMENT_EVENT:
+	{
+		WhiteboardDocumentInfo* pInfo = (WhiteboardDocumentInfo*)wParam;
+
+		OnDocumentEvent(pInfo->doc_status_type, pInfo->err_code);
+
+		delete pInfo;
+		break;
+	}
 	default:
 		break;
 	}
@@ -816,6 +1053,23 @@ void CMeetingMainWnd::SetToolbarScreenshareBtnStatus(bool isOpen)
 	}
 }
 
+void CMeetingMainWnd::SetToolbarBoardBtnStatus(bool isOpen)
+{
+	CControlUI* pBtnBoard = m_PaintManager.FindControl(L"btn_board");
+	if (isOpen)
+	{
+		pBtnBoard->SetAttribute(L"normalimage", L"img\\main_toolbar_board_selected.png");
+		pBtnBoard->SetAttribute(L"hotimage", L"img\\main_toolbar_board_hover.png");
+		pBtnBoard->SetAttribute(L"pushedimage", L"img\\main_toolbar_board_normal.png");
+	}
+	else
+	{
+		pBtnBoard->SetAttribute(L"normalimage", L"img\\main_toolbar_board_normal.png");
+		pBtnBoard->SetAttribute(L"hotimage", L"img\\main_toolbar_board_hover.png");
+		pBtnBoard->SetAttribute(L"pushedimage", L"img\\main_toolbar_board_selected.png");
+	}
+}
+
 void CMeetingMainWnd::AppendMsg(const CDuiString& strMsg, bool bSysMsg, const CDuiString& dstUser, const CDuiString& srcUser)
 {
 	CRichEditUI* pRichEdit = static_cast<CRichEditUI*>(m_PaintManager.FindControl(L"main_re_msgs"));
@@ -870,7 +1124,6 @@ void CMeetingMainWnd::AppendMsg(const CDuiString& strMsg, bool bSysMsg, const CD
 	}
 	else
 	{
-		
 		SetMsgFormat(dstUser, cf, true);
 		SetMsgFormat(L" 对 ", cf, false);
 		SetMsgFormat(srcUser, cf, true);
@@ -972,7 +1225,9 @@ void CMeetingMainWnd::AddMainUserItem(const std::string& strUserId)
 
 	CLabelUI* pLabelUserId = (CLabelUI*)pUserUi->FindSubControl(L"label_userid");
 	
-	pLabelUserId->SetText(strUserId == CSdkManager::GetInstance().GetLoginUserId() ? wstrUserId + L"(我)" : wstrUserId);
+	CDuiString wstrUserName = demo::Utf82WStr(CSdkManager::GetInstance().GetCustomName(strUserId.c_str())).GetWStr();
+
+	pLabelUserId->SetText(strUserId == CSdkManager::GetInstance().GetLoginUserId() ? wstrUserName + L"(我)" : wstrUserName);
 	pLabelUserId->SetUserData(wstrUserId);
 
 	pListControl->Add(pUserUi);
@@ -1002,11 +1257,12 @@ void CMeetingMainWnd::AddChatUserItem(const std::string & strUserId)
 	if (!pUserCombo)
 		return;
 
-	CDuiString wstrUserId = demo::Utf82WStr(strUserId.c_str()).GetWStr();
 	int nIndex = pUserCombo->GetCount();
+	CDuiString wstrUserName = demo::Utf82WStr(CSdkManager::GetInstance().GetCustomName(strUserId.c_str())).GetWStr();
 
-	CListLabelElementUI* lte = new CListLabelElementUI();
-	lte->SetText(wstrUserId);
+	CListLabelElementUI* lte = new CListLabelElementUI();	
+
+	lte->SetText(wstrUserName);
 	lte->SetTag(nIndex);
 	pUserCombo->AddAt(lte, nIndex-1);
 }
@@ -1030,7 +1286,7 @@ void CMeetingMainWnd::DelChatUserItem(const std::string & strUserId)
 	}
 }
 
-void CMeetingMainWnd::OnAppendMsg(const char * szSenderUserId, const char* szMsg, bool bGroup)
+void CMeetingMainWnd::AppendMsgMainThread(const char * szSenderUserId, const char* szMsg, bool bGroup)
 {
 	MsgReciveInfo *pMsgInfo = new MsgReciveInfo;
 	pMsgInfo->srcuserid = szSenderUserId;
@@ -1039,4 +1295,219 @@ void CMeetingMainWnd::OnAppendMsg(const char * szSenderUserId, const char* szMsg
 	::PostMessage(m_hWnd,DUILIB_MSG_RECIVE_CAHTMSG, (WPARAM)pMsgInfo,0);
 }
 
+void CMeetingMainWnd::AppendCommonInfoMainThread(const CDuiString& strMsg)
+{
+	CDuiString* pMsgStr = new CDuiString(strMsg);
+	::PostMessage(m_hWnd, DUILIB_MSG_CMMONINFO, (WPARAM)pMsgStr, 0);
+}
 
+CControlUI* CMeetingMainWnd::EnsureBoardLayout(const std::string& strboardId, const std::string& strboardname)
+{
+	CControlUI* ret_val = NULL;
+	for (std::vector<WhiteboardLayoutInfo>::size_type i = 0; i < m_vecBoards.size(); i++)
+	{
+		if (m_vecBoards[i].strBoardId.compare(strboardId) == 0) {
+			ret_val = m_vecBoards[i].pLayout;
+			break;
+		}
+	}
+
+	if (NULL == ret_val) {
+		CTabLayoutUI* pTabLayout = static_cast<CTabLayoutUI*>(m_PaintManager.FindControl(_T("main_tab")));
+		CDialogBuilder builder;
+		auto ctrl = builder.Create(_T("board_tab.xml"), nullptr, this, &m_PaintManager);
+		pTabLayout->Add(ctrl);
+		ctrl->Activate();
+
+		auto opt = new DuiLib::COptionUI();
+		opt->SetGroup(_T("main_tab"));
+		opt->SetText(demo::Utf82WStr(strboardname.c_str()).GetWStr());
+		opt->SetToolTip(demo::Utf82WStr(strboardname.c_str()).GetWStr());
+		opt->SetFixedWidth(90);
+		opt->SetUserData(demo::Utf82WStr(strboardId.c_str()).GetWStr());
+		opt->SetAttribute(_T("name"), _T("tabopt_board1"));
+		opt->SetAttribute(_T("selectedimage"), _T("img\\main_tonal_bg.png"));
+		opt->SetHotBkColor(0xFFD8D8D8);
+		opt->SetTextColor(0xff454545);
+		opt->SetHotTextColor(0xff6a7dfe);
+		opt->SetSelectedTextColor(0xffffffff);
+
+		auto opts = dynamic_cast<CContainerUI*>(m_PaintManager.FindControl(_T("main_opt")));
+		opts->AddAt(opt, opts->GetCount() - 2);
+
+		//打开白板
+		CBoardPanelUI* pBoardPanelWnd = static_cast<CBoardPanelUI*>(m_PaintManager.FindSubControlByName(ctrl, _T("main_board_panel1")));
+		pBoardPanelWnd->BoardOpen(strboardname.c_str(), strboardId.c_str());
+
+		WhiteboardLayoutInfo tmp;
+		tmp.strBoardId = strboardId;
+		tmp.pLayout = ctrl;
+		tmp.pOption = opt;
+		m_vecBoards.push_back(tmp);
+		ret_val = ctrl;
+	}
+	return ret_val;
+}
+
+CControlUI* CMeetingMainWnd::FindBoardLayout(const std::string& strboardId)
+{
+	CControlUI* ret_val = NULL;
+
+	for (std::vector<WhiteboardLayoutInfo>::size_type i = 0; i < m_vecBoards.size(); i++)
+	{
+		if (m_vecBoards[i].strBoardId.compare(strboardId) == 0) {
+			ret_val = m_vecBoards[i].pLayout;
+			break;
+		}
+	}
+	return ret_val;
+}
+
+void CMeetingMainWnd::ReleaseBoardLayout(const std::string&  strboardId)
+{
+	for (std::vector<WhiteboardLayoutInfo>::iterator iter = m_vecBoards.begin();
+		iter != m_vecBoards.end(); iter++)
+	{
+		if ((*iter).strBoardId.compare(strboardId) == 0) {
+			auto opts = dynamic_cast<CContainerUI*>(m_PaintManager.FindControl(_T("main_opt")));
+			opts->Remove((*iter).pOption);
+			(*iter).pOption->SetVisible(false);
+
+			CTabLayoutUI* pTabLayout = static_cast<CTabLayoutUI*>(m_PaintManager.FindControl(_T("main_tab")));
+			pTabLayout->Remove((*iter).pLayout);
+			CBoardPanelUI* pBoardPanelWnd = (CBoardPanelUI*)m_PaintManager.FindSubControlByName((*iter).pLayout, L"main_board_panel1");
+			(*iter).pLayout->SetVisible(false);
+			pBoardPanelWnd->BoardClose(strboardId.c_str());
+
+			m_vecBoards.erase(iter);
+			break;
+		}
+	}
+}
+
+void CMeetingMainWnd::ClearAllBoardLayout()
+{
+	for (auto iter = m_vecBoards.begin(); iter != m_vecBoards.end();)
+	{
+		auto opts = dynamic_cast<CContainerUI*>(m_PaintManager.FindControl(_T("main_opt")));
+		opts->Remove(iter->pOption);
+		iter->pOption->SetVisible(false);
+
+		CTabLayoutUI* pTabLayout = static_cast<CTabLayoutUI*>(m_PaintManager.FindControl(_T("main_tab")));
+		pTabLayout->Remove(iter->pLayout);
+		CBoardPanelUI* pBoardPanelWnd = (CBoardPanelUI*)m_PaintManager.FindSubControlByName(iter->pLayout, L"main_board_panel1");
+		iter->pLayout->SetVisible(false);
+		pBoardPanelWnd->BoardClose(iter->strBoardId.c_str());
+
+		iter = m_vecBoards.erase(iter);
+	}
+}
+
+void CMeetingMainWnd::SetBoardEditStatus(CControlUI* pPrient, bool enable)
+{
+	CControlUI* pBtnSelect = m_PaintManager.FindSubControlByName(pPrient, L"btn_board_select");
+	CControlUI* pBtnDelete = m_PaintManager.FindSubControlByName(pPrient, L"btn_board_delete");
+	CControlUI* pBtnClear = m_PaintManager.FindSubControlByName(pPrient, L"btn_board_clear");
+	CControlUI* pBtnLine = m_PaintManager.FindSubControlByName(pPrient, L"btn_board_line");
+	CControlUI* pBtnPath = m_PaintManager.FindSubControlByName(pPrient, L"btn_board_path");
+	CControlUI* pBtnText = m_PaintManager.FindSubControlByName(pPrient, L"btn_board_text");
+	CControlUI* pBtnUndo = m_PaintManager.FindSubControlByName(pPrient, L"btn_board_undo");
+	CControlUI* pBtnRedo = m_PaintManager.FindSubControlByName(pPrient, L"btn_board_redo");
+	CControlUI* pBtnThin = m_PaintManager.FindSubControlByName(pPrient, L"btn_board_thin");
+	CControlUI* pBtnMid = m_PaintManager.FindSubControlByName(pPrient, L"btn_board_mid");
+	CControlUI* pBtnThick = m_PaintManager.FindSubControlByName(pPrient, L"btn_board_thick");
+	CControlUI* pBtnRed = m_PaintManager.FindSubControlByName(pPrient, L"btn_board_red");
+	CControlUI* pBtnBlue = m_PaintManager.FindSubControlByName(pPrient, L"btn_board_blue");
+	CControlUI* pBtnGreen = m_PaintManager.FindSubControlByName(pPrient, L"btn_board_green");
+
+	if (!pBtnSelect || !pBtnDelete || !pBtnClear || !pBtnLine || !pBtnPath || !pBtnText || !pBtnUndo ||
+		!pBtnRedo || !pBtnThin || !pBtnMid || !pBtnThick || !pBtnRed || !pBtnBlue || !pBtnGreen) {
+		return;
+	}
+	
+	pBtnSelect->SetVisible(enable);
+	pBtnDelete->SetVisible(enable);
+	pBtnClear->SetVisible(enable);
+	pBtnLine->SetVisible(enable);
+	pBtnPath->SetVisible(enable);
+	pBtnText->SetVisible(enable);
+	pBtnUndo->SetVisible(enable);
+	pBtnRedo->SetVisible(enable);
+	pBtnThin->SetVisible(enable);
+	pBtnMid->SetVisible(enable);
+	pBtnThick->SetVisible(enable);
+	pBtnRed->SetVisible(enable);
+	pBtnBlue->SetVisible(enable);
+	pBtnGreen->SetVisible(enable);
+	
+}
+
+void CMeetingMainWnd::OnDocumentEvent(fsp_wb::DocStatusType doc_event_type, fsp::ErrCode err_code)
+{
+	switch (doc_event_type)
+	{
+	case fsp_wb::DOC_STATUS_UPLOAD_RESULT:
+	{
+		CDuiString strMsg;
+		strMsg.Format(L"文件上传:(%s)", (err_code == ERR_OK) ? L"成功" : L"失败");
+		AppendMsg(strMsg);
+	}break;
+	case fsp_wb::DOC_STATUS_TRANSCODEING:
+	{
+		CDuiString strMsg;
+		strMsg.Format(L"文件转码中,请耐心等待...");
+		AppendMsg(strMsg);
+	}break;
+	case fsp_wb::DOC_STATUS_TRANSCODE_RESULT:
+	{
+		CDuiString strMsg;
+		strMsg.Format(L"文件转码:(%s)", (err_code == ERR_OK) ? L"成功" : L"失败");
+		AppendMsg(strMsg);
+	}break;
+	case fsp_wb::DOC_STATUS_TRANSCODE_CANCLE_RESULT:
+	{
+		CDuiString strMsg;
+		strMsg.Format(L"文件转码取消结果:(%s)", (err_code == ERR_OK) ? L"成功" : L"失败");
+		AppendMsg(strMsg);
+	}break;
+	case fsp_wb::DOC_STATUS_GET_DOWNLOAD_PATH_RESULT:
+	{
+		CDuiString strMsg;
+		strMsg.Format(L"获取下载路径结果:(%s)", (err_code == ERR_OK) ? L"成功" : L"失败");
+		AppendMsg(strMsg);
+	}break;
+	case fsp_wb::DOC_STATUS_DOWNLOAD_RESULT:
+	{
+		CDuiString strMsg;
+		strMsg.Format(L"图片下载结果:(%s)", (err_code == ERR_OK) ? L"成功" : L"失败");
+		AppendMsg(strMsg);
+	}break;
+	default:
+		break;
+	}
+}
+
+void CMeetingMainWnd::SetBoardPageBtnStatus(CControlUI* pPrient, bool isFrist, bool isEnd)
+{
+	CControlUI* pBtnBoardPer = m_PaintManager.FindSubControlByName(pPrient, L"btn_board_prePage");
+	CControlUI* pBtnBoardNex = m_PaintManager.FindSubControlByName(pPrient, L"btn_board_nexPage");
+	if (!pBtnBoardPer || !pBtnBoardNex) {
+		return;
+	}
+	if (isFrist) {
+		pBtnBoardPer->SetAttribute(L"normalimage", L"img\\board_perPage_disable.png");
+		pBtnBoardPer->SetAttribute(L"pushedimage", L"img\\board_perPage_disable.png");
+	}
+	else {
+		pBtnBoardPer->SetAttribute(L"normalimage", L"img\\board_perPage_normal.png");
+		pBtnBoardPer->SetAttribute(L"pushedimage", L"img\\board_perPage_selected.png");
+	}
+	if (isEnd) {
+		pBtnBoardNex->SetAttribute(L"normalimage", L"img\\board_nexPage_disable.png");
+		pBtnBoardNex->SetAttribute(L"pushedimage", L"img\\board_nexPage_disable.png");
+	}
+	else {
+		pBtnBoardNex->SetAttribute(L"normalimage", L"img\\board_nexPage_normal.png");
+		pBtnBoardNex->SetAttribute(L"pushedimage", L"img\\board_nexPage_selected.png");
+	}
+}

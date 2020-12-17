@@ -56,7 +56,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>duilib/DuiLib;../../output/sdk/windows_cpp/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>duilib/DuiLib;../../wb_core/doc_transfer;../../wrappers/win32dll;../../output/sdk/windows_cpp/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -68,6 +68,11 @@
     <PostBuildEvent>
       <Command>@echo off
 echo -----------------------------
+copy /Y ..\..\third_party\curl\windows\lib\libcurl.dll ..\..\output\sdk\windows_cpp\bin\
+copy /Y ..\..\third_party\curl\windows\lib\libeay32.dll ..\..\output\sdk\windows_cpp\bin\
+copy /Y ..\..\third_party\curl\windows\lib\libssh2.dll ..\..\output\sdk\windows_cpp\bin\
+copy /Y ..\..\third_party\curl\windows\lib\ssleay32.dll ..\..\output\sdk\windows_cpp\bin\
+
 
 rd /s /q $(TargetDir)skin
 md $(TargetDir)skin
@@ -84,10 +89,12 @@ copy /Y $(TargetPath) ..\..\output\demo\windows_cpp\
 copy /Y appinfo.xml ..\..\output\demo\windows_cpp\
 xcopy /y/s/e/i skin ..\..\output\demo\windows_cpp\skin
 copy /Y ..\..\output\sdk\windows_cpp\bin\*.dll ..\..\output\demo\windows_cpp\
-copy /Y duilib\bin\DuiLib_ud.dll ..\..\output\demo\windows_cpp\</Command>
+copy /Y duilib\bin\DuiLib_ud.dll ..\..\output\demo\windows_cpp\
+</Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>copy /Y ..\..\output\sdk\windows_cpp\bin\*.dll $(IntDir)</Command>
+      <Command>copy /Y  ..\..\output\sdk\windows_cpp\bin\*.dll  $(IntDir)
+</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -98,7 +105,7 @@ copy /Y duilib\bin\DuiLib_ud.dll ..\..\output\demo\windows_cpp\</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>duilib/DuiLib;../../output/sdk/windows_cpp/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>duilib/DuiLib;../../wrappers/win32dll;../../wb_core/doc_transfer;../../output/sdk/windows_cpp/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -111,6 +118,10 @@ copy /Y duilib\bin\DuiLib_ud.dll ..\..\output\demo\windows_cpp\</Command>
     <PostBuildEvent>
       <Command>@echo off
 echo -----------------------------
+copy /Y ..\..\third_party\curl\windows\lib\libcurl.dll ..\..\output\sdk\windows_cpp\bin\
+copy /Y ..\..\third_party\curl\windows\lib\libeay32.dll ..\..\output\sdk\windows_cpp\bin\
+copy /Y ..\..\third_party\curl\windows\lib\libssh2.dll ..\..\output\sdk\windows_cpp\bin\
+copy /Y ..\..\third_party\curl\windows\lib\ssleay32.dll ..\..\output\sdk\windows_cpp\bin\
 
 rd /s /q $(TargetDir)skin
 md $(TargetDir)skin
@@ -130,12 +141,18 @@ copy /Y appinfo.xml ..\..\output\demo\windows_cpp\
 xcopy /y/s/e/i skin ..\..\output\demo\windows_cpp\skin
 copy /Y duilib\bin\DuiLib_u.dll ..\..\output\demo\windows_cpp\</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>copy /Y  ..\..\output\sdk\windows_cpp\bin\*.dll  $(IntDir)
+</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppConfigWnd.h" />
+    <ClInclude Include="BoardCreateWnd.h" />
+    <ClInclude Include="BoardToolbarWnd.h" />
     <ClInclude Include="ConfigParser.h" />
     <ClInclude Include="define.h" />
     <ClInclude Include="MeetingMainWnd.h" />
@@ -151,6 +168,7 @@ copy /Y duilib\bin\DuiLib_u.dll ..\..\output\demo\windows_cpp\</Command>
     <ClInclude Include="targetver.h" />
     <ClInclude Include="tinyxml2.h" />
     <ClInclude Include="ToolbarMenu.h" />
+    <ClInclude Include="UIBoardPanel.h" />
     <ClInclude Include="UICrack.h" />
     <ClInclude Include="UIMenu.h" />
     <ClInclude Include="UIVideoPanel.h" />
@@ -163,6 +181,8 @@ copy /Y duilib\bin\DuiLib_u.dll ..\..\output\demo\windows_cpp\</Command>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="AppConfigWnd.cpp" />
+    <ClCompile Include="BoardCreateWnd.cpp" />
+    <ClCompile Include="BoardToolbarWnd.cpp" />
     <ClCompile Include="ConfigParser.cpp" />
     <ClCompile Include="MeetingMainWnd.cpp" />
     <ClCompile Include="LoginWnd.cpp" />
@@ -177,6 +197,7 @@ copy /Y duilib\bin\DuiLib_u.dll ..\..\output\demo\windows_cpp\</Command>
     </ClCompile>
     <ClCompile Include="tinyxml2.cpp" />
     <ClCompile Include="ToolbarMenu.cpp" />
+    <ClCompile Include="UIBoardPanel.cpp" />
     <ClCompile Include="UICrack.cpp" />
     <ClCompile Include="UIMenu.cpp" />
     <ClCompile Include="UIVideoPanel.cpp" />

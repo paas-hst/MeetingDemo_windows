@@ -62,16 +62,18 @@ void CLoginWnd::OnClick(TNotifyUI& msg)
 {
 	if (msg.pSender->GetName() == L"login_btn")
 	{
-		CEditUI* pUserEdit = (CEditUI*)m_PaintManager.FindControl(L"user_name_edit");
-		
+		CEditUI* pUserEdit = (CEditUI*)m_PaintManager.FindControl(L"user_name_edit");		
 		CDuiString strUserId = pUserEdit->GetText();
+
+		CEditUI* pUserCustomName = (CEditUI*)m_PaintManager.FindControl(L"custom_name_edit");
+		CDuiString strCustomName = pUserCustomName->GetText();
 
 		if (strUserId.IsEmpty() || strUserId.GetLength() >= 32) {
 			demo::ShowMessageBox(m_hWnd, L"UserId不能为空且长度不超过32");
 		}
 		else
 		{
-			fsp::ErrCode errCode = CSdkManager::GetInstance().Login(strUserId);
+			fsp::ErrCode errCode = CSdkManager::GetInstance().Login(strUserId, strCustomName);
 			if (errCode == fsp::ERR_OK) {
 				ShowLoading();
 			}

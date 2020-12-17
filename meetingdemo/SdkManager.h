@@ -1,22 +1,28 @@
-/*##############################################################################
- * ÎÄ¼ş£ºSdkManager.h
- * ÃèÊö£ºSDK¹ÜÀíÆ÷µÄÉùÃ÷Óë¶¨Òå
- * ×÷Õß£ºTeck
- * Ê±¼ä£º2018Äê5ÔÂ24ÈÕ
- * °æÈ¨£ºCopyright(C) 2018 Fsmeeting.com. All rights reserved.
+ï»¿/*##############################################################################
+ * æ–‡ä»¶ï¼šSdkManager.h
+ * æè¿°ï¼šSDKç®¡ç†å™¨çš„å£°æ˜ä¸å®šä¹‰
+ * ä½œè€…ï¼šTeck
+ * æ—¶é—´ï¼š2018å¹´5æœˆ24æ—¥
+ * ç‰ˆæƒï¼šCopyright(C) 2018 Fsmeeting.com. All rights reserved.
  ##############################################################################*/
 #pragma once
 
 #include "fsp_engine.h"
-
+#include <map>
 #include "LoginWnd.h"
 #include "MeetingMainWnd.h"
 #include "UserStateWnd.h"
+#include "fsp_white_board.h"
+#include "doc_define.h"
 
 using namespace fsp;
 
-//ÎªÁË´¦ÀífspÊÂ¼ş×ªµ½Ö÷Ïß³ÌµÄÏûÏ¢£¬ËùÒÔ´ÓWindowImplBase¼Ì³Ğ
-class CSdkManager : public IFspEngineEventHandler, public IFspSignalingEventHandler, public WindowImplBase
+//ä¸ºäº†å¤„ç†fspäº‹ä»¶è½¬åˆ°ä¸»çº¿ç¨‹çš„æ¶ˆæ¯ï¼Œæ‰€ä»¥ä»WindowImplBaseç»§æ‰¿
+class CSdkManager : 
+	public IFspEngineEventHandler, 
+	public IFspSignalingEventHandler, 
+	public WindowImplBase, 
+	public IFspWhiteBoardEventListener
 {
 public:
 	static CSdkManager& GetInstance();
@@ -28,7 +34,7 @@ public:
 
 	bool IsLogined();
 
-	fsp::ErrCode Login(LPCTSTR szUser);
+	fsp::ErrCode Login(LPCTSTR szUser, LPCTSTR szCustomName);
 	fsp::ErrCode JoinGroup(LPCTSTR szGroup);
 	fsp::ErrCode LeaveGroup();
 
@@ -40,6 +46,9 @@ public:
 
 	void SetMicVol(DWORD dwMicVol);
 	DWORD GetMicVol();
+
+	void SetVoiceVariant(INT nVoiceVariant);
+	INT GetVoiceVariant();
 
 	void SetAudVol(DWORD dwAudVol);
 	DWORD GetAudVol();
@@ -54,6 +63,7 @@ public:
 	DWORD GetFrameRate();
 
 	fsp::Vector<fsp::UserInfo> GetUserList() { return m_vecUsers; }
+	std::string GetCustomName(const char* szUserId);
 
 	void SetScreenShareConfig(const ScreenShareConfig& config);
 	ScreenShareConfig GetScreenShareConfig() const;
@@ -89,7 +99,7 @@ private:
 	virtual void OnRemoteVideoEvent(const String& user_id, 
 		const String& video_id,
 		RemoteVideoEventType remote_video_event) override;
-	virtual void OnRemoteAudioEvent(const String& user_id, 
+	virtual void OnRemoteAudioEvent(const String& user_id, const String& audio_id,
 		RemoteAudioEventType remote_audio_event) override;
 	virtual void OnRemoteControlOperationEvent(const String& user_id,
 		fsp::RemoteControlOperationType operation_type) override;
@@ -109,8 +119,18 @@ private:
 	void OnGroupMsgCome(const char* szSenderUserId, unsigned int nMsgId, const char* szMsg);
 	/////////////  end IFspSignalingEventHandler
 
+	////////////// begin IFspBoardEventListener
+	void OnWhiteBoardCreateResult(const String& strBoardId, const String& strBoardName, ErrCode result);
+	void OnWhiteBoardPublishStart(const String& strBoardId, const String& strBoardName);
+	void OnWhiteBoardPublishStop(const String& nBoardId);
+	void OnBoardSynUpdate(const String& nBoardId,
+		const WhiteBoardProfile& whiteboard_profile, int nCurrentPageID);
+	void OnRemoteChangePage(const String& nBoardId, int nCurrentPageID);
+	void OnDocumentEvent(fsp_wb::DocStatusType doc_event_type, ErrCode err_code);
+	/////////////  end IFspBoardEventListener
+
 	std::string BuildToken(const std::string& struserId);
-	void ShowErrorWnd(const CDuiString& strErrInfo);
+	void OnUserForceLogin();
 	
 private:
 	CLoginWnd*		    m_pLoginWnd = nullptr;
@@ -127,21 +147,22 @@ private:
 	std::string m_strMyGroupId;
 	std::string m_strMyUserId;
 
-	DWORD m_dwMicSetVolume;	// Âó¿Ë·çÉèÖÃÒôÁ¿Öµ
-	DWORD m_dwMicOpenIndex;	// Ñ¡ÔñÊ¹ÓÃµÄÂó¿Ë·ç
+	DWORD m_dwMicSetVolume = 0;	// éº¦å…‹é£è®¾ç½®éŸ³é‡å€¼
+	INT	  m_nVoiceVariant = 0; //éº¦å…‹é£è®¾ç½®å˜å£°
+	DWORD m_dwMicOpenIndex = 0;	// é€‰æ‹©ä½¿ç”¨çš„éº¦å…‹é£
 
-	DWORD m_dwAudSetVoluem; // ÑïÉùÆ÷ÉèÖÃÒôÁ¿Öµ
-	DWORD m_dwAudOpenIndex; // Ñ¡ÔñÊ¹ÓÃµÄÑïÉùÆ÷
+	DWORD m_dwAudSetVoluem; // æ‰¬å£°å™¨è®¾ç½®éŸ³é‡å€¼
+	DWORD m_dwAudOpenIndex; // é€‰æ‹©ä½¿ç”¨çš„æ‰¬å£°å™¨
 
-	DWORD m_dwResolutionIndex;	// ·Ö±æÂÊ
-	DWORD m_dwFrameRate;		// Ö¡ÂÊ
+	DWORD m_dwResolutionIndex;	// åˆ†è¾¨ç‡
+	DWORD m_dwFrameRate;		// å¸§ç‡
 
-	std::set<std::string> m_setMyPublishedVideoIds;
+	std::map<std::string, int> m_mapMyPublishedVideoIds;
 	
 	ScreenShareConfig m_screenShareConfig;
 
 	fsp::Vector<fsp::UserInfo> m_vecUsers;
 
-	fsp::String m_CurSelectChatUser="ËùÓĞÈË";
+	fsp::String m_CurSelectChatUser="æ‰€æœ‰äºº";
 };
 

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window size="120, 60">
+  <Font id="0" name="微软雅黑" size="12" bold="false" default="true" />
+  <VerticalLayout bkcolor="#FFFFFFFF" width="120"> 
+	  <Button name="btn_board_blank" width="120" height="30" text="新白板" hotbkcolor="#FFD8DCFA" textcolor="#ff454545" hottextcolor="#ff6a7dfe" selectedtextcolor="#ffffffff" />
+	  <Button name="btn_board_document" width="120" height="30" text="选择文件" hotbkcolor="#FFD8DCFA" textcolor="#ff454545" hottextcolor="#ff6a7dfe" selectedtextcolor="#ffffffff" />
+  </VerticalLayout>
+</Window>

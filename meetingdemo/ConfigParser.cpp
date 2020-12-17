@@ -119,6 +119,16 @@ bool CConfigParser::Init()
 			m_ClientConfig.strUserServerAddr = szUserServerAddr;
 	}
 
+	////////////////////////////////////////////////////////////////////////////
+
+	// ForceLogin
+	m_ClientConfig.bForceLogin = doc.FirstChildElement("ForceLogin")->BoolText();
+
+	// nRecvVoiceVariant
+	if (doc.FirstChildElement("RecvVoiceVariant") != NULL) {
+		m_ClientConfig.strRecvVoiceVariant = doc.FirstChildElement("RecvVoiceVariant")->GetText();
+	}
+
 	return true;
 }
 
@@ -184,6 +194,19 @@ void CConfigParser::Serialize()
 	tinyxml2::XMLElement* pUserServerAddr = doc.NewElement("UserServerAddr");
 	pUserServerAddr->SetText(m_ClientConfig.strUserServerAddr.c_str());
 	doc.LinkEndChild(pUserServerAddr);
+
+	///////////////////////////////////////////////////////////////////////////////
+
+	tinyxml2::XMLComment* pForceLoginComment = doc.NewComment("Whether force login");
+	doc.LinkEndChild(pForceLoginComment);
+
+	tinyxml2::XMLElement* pForceLogin = doc.NewElement("ForceLogin");
+	pForceLogin->SetText(m_ClientConfig.bForceLogin ? "true" : "false");
+	doc.LinkEndChild(pForceLogin);
+
+	tinyxml2::XMLElement* pRecvVoiceVariant = doc.NewElement("RecvVoiceVariant");
+	pRecvVoiceVariant->SetText(m_ClientConfig.strRecvVoiceVariant.c_str());
+	doc.LinkEndChild(pRecvVoiceVariant);
 
 	doc.SaveFile(m_ConfigFile.c_str());
 }

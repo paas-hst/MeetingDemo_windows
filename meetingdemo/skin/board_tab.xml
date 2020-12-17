@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<window>
+	<VerticalLayout name="main_board_container" content="board">
+		<BoardPanel name="main_board_panel1" textcolor="#FFFFFFFF" bkcolor="0xFF000000" />
+		<HorizontalLayout height="36" bkimage="img\\titlebar_bg.png">
+			<Button name="btn_board_edit" width="55" height="34" padding="4, 4, 4, 4" text="标注" tooltip="标注" textcolor="#FF000000" bkcolor="#FF00FF52" borderround="2, 2" />
+			<Button name="btn_board_select" width="45" height="34" padding="4, 4, 4, 4" text="选择" tooltip="选择" visible="false" textcolor="#FFFFFFFF" bkcolor="#FF6A7DFE" borderround="2, 2" />
+			<Button name="btn_board_delete" width="55" height="34" padding="4, 4, 4, 4" text="橡皮檫" tooltip="橡皮檫" visible="false" textcolor="#FFFFFFFF" bkcolor="#FF6A7DFE" borderround="2, 2" />
+			<Button name="btn_board_line" width="45" height="34" padding="4, 4, 4, 4" text="直线" tooltip="直线" visible="false" textcolor="#FFFFFFFF" bkcolor="#FF6A7DFE" borderround="2, 2" />
+			<Button name="btn_board_path" width="45" height="34" padding="4, 4, 4, 4" text="曲线" tooltip="曲线" visible="false" textcolor="#FFFFFFFF" bkcolor="#FF6A7DFE" borderround="2, 2" />
+			<Button name="btn_board_text" width="45" height="34" padding="4, 4, 4, 4" text="文本" tooltip="文本" visible="false" textcolor="#FFFFFFFF" bkcolor="#FF6A7DFE" borderround="2, 2" />
+			<Button name="btn_board_undo" width="45" height="34" padding="4, 4, 4, 4" text="撤销" tooltip="撤销" visible="false" textcolor="#FFFFFFFF" bkcolor="#FF6A7DFE" borderround="2, 2" />
+			<Button name="btn_board_redo" width="45" height="34" padding="4, 4, 4, 4" text="恢复" tooltip="恢复" visible="false" textcolor="#FFFFFFFF" bkcolor="#FF6A7DFE" borderround="2, 2" />
+			<Button name="btn_board_clear" width="45" height="34" padding="3, 3, 3, 3" text="清空" tooltip="清空" visible="false" textcolor="#FFFFFFFF" bkcolor="#FF6A7DFE" borderround="2, 2" />
+			<Button name="btn_board_thin" width="25" height="34" padding="4, 4, 4, 4" text="细" tooltip="细" visible="false" textcolor="#FF000000" bkcolor="#FFFFFFFF" borderround="2, 2" />
+			<Button name="btn_board_mid" width="25" height="34" padding="4, 4, 4, 4" text="中" tooltip="中" visible="false" textcolor="#FF000000" bkcolor="#FFD8D8D8" borderround="2, 2" />
+			<Button name="btn_board_thick" width="25" height="34" padding="4, 4, 4, 4" text="粗" tooltip="粗" visible="false" textcolor="#FF000000" bkcolor="#FF666666" borderround="2, 2" />
+			<Button name="btn_board_red" width="25" height="34" padding="4, 4, 4, 4" text="红" tooltip="红" visible="false" textcolor="#FFFFFFFF" bkcolor="#FFFF0000" borderround="2, 2" />
+			<Button name="btn_board_blue" width="25" height="34" padding="4, 4, 4, 4" text="蓝" tooltip="蓝" visible="false" textcolor="#FFFFFFFF" bkcolor="#FF0098FF" borderround="2, 2" />
+			<Button name="btn_board_green" width="25" height="34" padding="4, 4, 4, 4" text="绿" tooltip="绿" visible="false" textcolor="#FFFFFFFF" bkcolor="#FF00FF52" borderround="2, 2" />
+			<Button name="btn_board_prePage" width="25" height="34" padding="4, 4, 4, 4" tooltip="上一页" bkcolor="#FFF8F9FB" normalimage="file='img\\board_perPage_disable.png'" pushedimage="img\\board_perPage_selected.png" />
+			<Button name="btn_board_curPage" width="20" height="34" padding="4, 4, 4, 4" text="1" tooltip="当前页" textcolor="#FFFF0000" bkcolor="#FFFFFFFF" borderround="2, 2" />
+			<Button name="btn_board_nexPage" width="25" height="34" padding="4, 4, 4, 4" tooltip="下一页" bkcolor="#FFF8F9FB" normalimage="file='img\\board_nexPage_normal.png'" pushedimage="img\\board_nexPage_selected.png" />
+			<Control />
+			<Button name="btn_board_syn" width="30" height="34" padding="4, 4, 4, 4" text="同步" tooltip="视角模式" textcolor="#FFFFFFFF" bkcolor="#ff6A7DFE" borderround="2, 2" />
+			<Button name="btn_board_close" width="55" height="34" padding="4, 4, 4, 4" text="关闭白板" tooltip="关闭白板" textcolor="#FFFFFFFF" bkcolor="#FFFF0000" borderround="2, 2" />
+		</HorizontalLayout>
+	</VerticalLayout>
+</window>

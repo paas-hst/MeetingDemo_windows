@@ -23,10 +23,11 @@
 
 CSdkManager::CSdkManager()
 	: m_pFspEngine(nullptr)
-	, m_dwAudOpenIndex(INVALID_AUD_INDEX)
-	, m_dwMicOpenIndex(INVALID_MIC_INDEX)
+	, m_dwAudOpenIndex(0)
+	, m_dwMicOpenIndex(0)
 	, m_dwAudSetVoluem(50)
 	, m_dwMicSetVolume(50)
+	, m_nVoiceVariant(0)
 	, m_dwResolutionIndex(0)	// 默认分辨率：320*240
 	, m_dwFrameRate(15)			// 默认帧率：15帧/秒
 	, m_pLoginWnd(nullptr)
@@ -62,6 +63,7 @@ bool CSdkManager::Init()
 	m_FspEnginContext.log_path = "./";
 	m_FspEnginContext.event_handler = this;
 	m_FspEnginContext.server_addr = config.bServerUserDefine ? config.strUserServerAddr.c_str() : config.strServerAddr.c_str();
+	m_FspEnginContext.recv_voice_variant = atoi(config.strRecvVoiceVariant.c_str());
 	 
 	fsp::ErrCode result = m_pFspEngine->Init(m_FspEnginContext);
 	if (result != ERR_OK)
@@ -76,6 +78,7 @@ bool CSdkManager::Init()
 	{
 		m_dwMicOpenIndex = nMicIndex;
 		pAudioEngin->SetAudioParam(AUDIOPARAM_MICROPHONE_VOLUME, m_dwMicSetVolume);
+		pAudioEngin->SetAudioParam(AUDIOPARAM_VOICE_VARIANT, m_nVoiceVariant);
 	}
 
 	int nAudIndex = pAudioEngin->GetSpeakerDevice();
@@ -90,15 +93,18 @@ bool CSdkManager::Init()
 	m_pFspSignaling = m_pFspEngine->GetFspSignaling();
 	m_pFspSignaling->AddEventHandler(this);
 
+	m_pFspEngine->GetFspWhiteBoard()->SetEventListener(this);
+
 	return true;
 }
 
 void CSdkManager::Destroy()
 {
-	Close();
-
 	DESTROY_WND(m_pLoginWnd);
+	DESTROY_WND(m_pUserStateWnd);
 	DESTROY_WND(m_pMeetingMainWnd);
+
+	Close();
 
 	FspReleaseEngine();
 }
@@ -131,20 +137,22 @@ bool CSdkManager::IsLogined()
 	return m_isLogined;
 }
 
-fsp::ErrCode CSdkManager::Login(LPCTSTR szUser)
+fsp::ErrCode CSdkManager::Login(LPCTSTR szUser, LPCTSTR szCustomName)
 {
 	m_strMyUserId = demo::WStr2Utf8(szUser).GetUtf8Str();
 
 	// 生成Token
 	fsp::String strToken = BuildToken(m_strMyUserId).c_str();
 
-	return m_pFspEngine->Login(strToken.c_str(), m_strMyUserId.c_str());
+	demo::ClientConfig& config = demo::CConfigParser::GetInstance().GetClientConfig();
+
+	return m_pFspEngine->Login(strToken.c_str(), m_strMyUserId.c_str(), config.bForceLogin, demo::WStr2Utf8(szCustomName).GetUtf8Str());
 }
 
 fsp::ErrCode CSdkManager::JoinGroup(LPCTSTR szGroup)
 {
 	m_strMyGroupId = demo::WStr2Utf8(szGroup).GetUtf8Str();
-	m_setMyPublishedVideoIds.clear();
+	m_mapMyPublishedVideoIds.clear();
 	return m_pFspEngine->JoinGroup(m_strMyGroupId.c_str());
 }
 
@@ -198,6 +206,20 @@ DWORD CSdkManager::GetMicVol()
 	return m_dwMicSetVolume;
 }
 
+void CSdkManager::SetVoiceVariant(INT nVoiceVariant)
+{
+	assert(nVoiceVariant >= -12 && nVoiceVariant <= 12);
+
+	m_pFspEngine->GetAudioEngine()->SetAudioParam(AUDIOPARAM_VOICE_VARIANT, nVoiceVariant);
+
+	m_nVoiceVariant = nVoiceVariant;
+}
+
+INT CSdkManager::GetVoiceVariant()
+{
+	return m_nVoiceVariant;
+}
+
 void CSdkManager::SetAudVol(DWORD dwAudVol)
 {
 	assert(dwAudVol >= 0 && dwAudVol <= 100);
@@ -222,8 +244,8 @@ void CSdkManager::SetFrameRate(DWORD dwFrameRate)
 		profile.width = VideoResolutions[m_dwResolutionIndex].dwWidth;
 		profile.height = VideoResolutions[m_dwResolutionIndex].dwHeight;
 		profile.framerate = m_dwFrameRate;
-		for (const auto& videoid : m_setMyPublishedVideoIds) {
-			m_pFspEngine->SetVideoProfile(videoid.c_str(), profile);
+		for (const auto& iter : m_mapMyPublishedVideoIds) {
+			m_pFspEngine->SetVideoProfile(iter.first.c_str(), profile);
 		}
 	}
 }
@@ -231,6 +253,18 @@ void CSdkManager::SetFrameRate(DWORD dwFrameRate)
 void CSdkManager::SetScreenShareConfig(const ScreenShareConfig& config)
 {
 	m_screenShareConfig = config;
+}
+
+std::string CSdkManager::GetCustomName(const char* szUserId)
+{
+	for (auto user : m_vecUsers) {
+		if (user.user_id == szUserId && !user.custom_info.empty()) {
+			return user.custom_info.c_str();
+		}
+	}
+
+	//如果没有custominfo 则用userid作为昵称
+	return szUserId;
 }
 
 ScreenShareConfig CSdkManager::GetScreenShareConfig() const
@@ -252,8 +286,8 @@ void CSdkManager::SetResolution(DWORD dwResolutionIndex)
 		profile.width = VideoResolutions[m_dwResolutionIndex].dwWidth;
 		profile.height = VideoResolutions[m_dwResolutionIndex].dwHeight;
 		profile.framerate = m_dwFrameRate;
-		for (const auto& videoid : m_setMyPublishedVideoIds) {
-			m_pFspEngine->SetVideoProfile(videoid.c_str(), profile);
+		for (const auto& iter : m_mapMyPublishedVideoIds) {
+			m_pFspEngine->SetVideoProfile(iter.first.c_str(), profile);
 		}
 	}
 }
@@ -265,13 +299,13 @@ DWORD CSdkManager::GetResolution()
 
 fsp::ErrCode CSdkManager::StartPublishVideo(const char* szVideoId, int nCameraId)
 {
-	m_setMyPublishedVideoIds.insert(szVideoId);
+	m_mapMyPublishedVideoIds[szVideoId] = nCameraId;
 	return m_pFspEngine->StartPublishVideo(szVideoId, nCameraId);
 }
 
 fsp::ErrCode CSdkManager::StopPublishVideo(const char* szVideoId)
 {
-	m_setMyPublishedVideoIds.erase(szVideoId);
+	m_mapMyPublishedVideoIds.erase(szVideoId);
 	return m_pFspEngine->StopPublishVideo(szVideoId);
 }
 
@@ -353,10 +387,10 @@ void CSdkManager::OnFspEvent(fsp::EventType eventType, fsp::ErrCode result)
 		}
 	}
 	else if (eventType == fsp::EVENT_CONNECT_LOST){
-		m_pMeetingMainWnd->ResetWindowStatus();
-		//连接断开，显示失败窗口
-		//@todo
-		//ShowErrorWnd(L"连接断开");
+		if (result == fsp::ErrCode::ERR_USERID_CONFLICT)
+		{
+			OnUserForceLogin();
+		}
 	}
 }
 
@@ -376,7 +410,7 @@ void CSdkManager::OnRemoteVideoEvent(const String& user_id, const String& video_
 	}
 }
 
-void CSdkManager::OnRemoteAudioEvent(const String& user_id, RemoteAudioEventType remote_audio_event)
+void CSdkManager::OnRemoteAudioEvent(const String& user_id, const String& audio_id, RemoteAudioEventType remote_audio_event)
 {
 	if (m_pMeetingMainWnd && IsWindow(m_pMeetingMainWnd->GetHWND())) {
 		RemoteAudioInfo* pInfo = new RemoteAudioInfo;
@@ -486,12 +520,66 @@ void CSdkManager::OnInviteRejected(const char* szRemoteUserId, unsigned int nInv
 
 void CSdkManager::OnUserMsgCome(const char * szSenderUserId, unsigned int nMsgId, const char * szMsg)
 {
-	m_pMeetingMainWnd->OnAppendMsg(szSenderUserId,szMsg);
+	m_pMeetingMainWnd->AppendMsgMainThread(szSenderUserId,szMsg);
 }
 
 void CSdkManager::OnGroupMsgCome(const char * szSenderUserId, unsigned int nMsgId, const char * szMsg)
 {
-	m_pMeetingMainWnd->OnAppendMsg(szSenderUserId, szMsg, true);
+	m_pMeetingMainWnd->AppendMsgMainThread(szSenderUserId, szMsg, true);
+}
+
+void CSdkManager::OnWhiteBoardCreateResult(const String& strBoardId, const String& strBoardName, ErrCode result)
+{
+	CDuiString strInfo;
+	strInfo.Format(L"白板：%s, id: %s, 创建结果:%d",
+		demo::Utf82WStr(strBoardName.c_str()), demo::Utf82WStr(strBoardId.c_str()), result);
+	m_pMeetingMainWnd->AppendCommonInfoMainThread(strInfo);
+}
+
+void CSdkManager::OnWhiteBoardPublishStart(const String& strBoardId, const String& strBoardName)
+{
+	WhiteBoardPulishInfo* pInfo = new WhiteBoardPulishInfo();
+	pInfo->strWhiteBoardName = strBoardName.c_str();
+	pInfo->strWhiteBoardId = strBoardId.c_str();
+	pInfo->isPublish = true;
+
+	m_pMeetingMainWnd->PostMessage(DUILIB_MSG_WHITEBOARD_PUBLISH, (WPARAM)pInfo, 0);
+}
+
+void CSdkManager::OnWhiteBoardPublishStop(const String& strBoardId)
+{
+	WhiteBoardPulishInfo* pInfo = new WhiteBoardPulishInfo();
+	pInfo->strWhiteBoardId = strBoardId.c_str();
+	pInfo->isPublish = false;
+
+	m_pMeetingMainWnd->PostMessage(DUILIB_MSG_WHITEBOARD_PUBLISH, (WPARAM)pInfo, 0);
+}
+
+void CSdkManager::OnBoardSynUpdate(const String& nBoardId,
+	const WhiteBoardProfile& whiteboard_profile, int nCurrentPageID)
+{
+	RemoteWhiteboardInfo* pInfo = new RemoteWhiteboardInfo;
+	pInfo->nPageId = nCurrentPageID;
+	pInfo->strMediaId = nBoardId;
+	pInfo->whiteboard_profile = whiteboard_profile;
+	m_pMeetingMainWnd->PostMessageW(DUILIB_MSG_WHITEBOARD_SYN_DATA, (WPARAM)pInfo, 0);
+}
+
+void CSdkManager::OnRemoteChangePage(const String& nBoardId, int nCurrentPageID)
+{
+	RemoteWhiteboardInfo* pInfo = new RemoteWhiteboardInfo;
+	pInfo->nPageId = nCurrentPageID;
+	pInfo->strMediaId = nBoardId;
+
+	m_pMeetingMainWnd->PostMessageW(DUILIB_MSG_WHITEBOARD_PAGE_CHANGE, (WPARAM)pInfo, 0);
+}
+
+void CSdkManager::OnDocumentEvent(fsp_wb::DocStatusType doc_status_type, ErrCode err_code)
+{
+	WhiteboardDocumentInfo* pInfo = new WhiteboardDocumentInfo;
+	pInfo->doc_status_type = doc_status_type;
+	pInfo->err_code = err_code;
+	m_pMeetingMainWnd->PostMessageW(DUILIB_MSG_DOCUMENT_EVENT, (WPARAM)pInfo, 0);
 }
 
 CDuiString CSdkManager::BuildErrorInfo(fsp::ErrCode errCode)
@@ -539,14 +627,23 @@ const std::string CSdkManager::GetLoginUserId()
 	return m_strMyUserId;
 }
 
-void CSdkManager::ShowErrorWnd(const CDuiString& strErrInfo)
+void CSdkManager::OnUserForceLogin()
 {
-	//先隐藏主窗口
+	demo::ShowMessageBox(NULL, CDuiString(L"用户强制登录，连接断开！"));
+
 	if (m_pMeetingMainWnd) {
 		m_pMeetingMainWnd->ShowWindow(false);
+		m_pMeetingMainWnd->Close();
 	}
 
-	//@todo
+	if (m_pUserStateWnd) {
+		m_pUserStateWnd->ShowWindow(false);
+		m_pUserStateWnd->Close();
+	}
+
+	if (m_pLoginWnd) {
+		m_pLoginWnd->ShowWindow(true);
+	}
 }
 
 CDuiString CSdkManager::GetSkinFolder()
